@@ -284,6 +284,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cardPrefab: {fileID: 5955382507723385425, guid: 1dba2fbd249d947a785112e53797c35f, type: 3}
+  score: 0
+  sanity: 10
+  SANITY_MAX: 10
+  blood: 10
+  BLOOD_MAX: 100
+  visibility_range: 1.5
+  bloodDepletionRate: 0
+  BLOOD_DEPLETION_RATE_MAX: 5
+  availableCards:
+  - {fileID: 11400000, guid: fa890b1ec23b14726a25a52d0279232e, type: 2}
+  - {fileID: 11400000, guid: 333dce073d35e4037a1ed6e86f06eca7, type: 2}
+  vampirePosition: {x: 0, y: 0}
 --- !u!1 &2064764460
 GameObject:
   m_ObjectHideFlags: 0

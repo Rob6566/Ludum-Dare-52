@@ -12,12 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7145e71998ea54b5cbe6af8b5ad156ef, type: 3}
   m_Name: Stake
   m_EditorClassIdentifier: 
-  name: Adorable Kitten
-  textOnGrab: Feral cats mess with the delicately balanced ecosystem. I was doing
-    everyone a favour...
+  name: Stake
+  textOnGrab: 
   sprite: {fileID: 0}
   cardProbability: 10
-  sanityModifier: -2
-  bloodModifier: 5
-  resetBloodDrain: 1
+  sanityModifier: 0
+  bloodModifier: 0
+  scoreModifier: 10
+  resetBloodDrain: 0
   cardClass: basicCard
+  impassable: 0
+  generationMinRange: 0
+  generationMaxRange: 10

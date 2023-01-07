@@ -19,5 +19,9 @@ MonoBehaviour:
   cardProbability: 10
   sanityModifier: -2
   bloodModifier: 5
+  scoreModifier: 0
   resetBloodDrain: 1
   cardClass: basicCard
+  impassable: 0
+  generationMinRange: 0
+  generationMaxRange: 20

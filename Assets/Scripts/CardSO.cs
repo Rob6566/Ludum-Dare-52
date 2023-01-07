@@ -14,4 +14,9 @@ public class CardSO : ScriptableObject {
     public int scoreModifier = 0;
     public bool resetBloodDrain = false;
     public string cardClass = "basicCard";
+    public bool impassable = false;
+    
+    //Where this can generate
+    public int generationMinRange=0;
+    public int generationMaxRange=10;
 }
