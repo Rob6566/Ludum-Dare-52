@@ -25,6 +25,9 @@ public class GameManager : MonoBehaviour
     public int CARD_HEIGHT_OFFSET=0;
     public int MAP_SIZE_FROM_START=10;
 
+    public float SECONDS_TO_TRAVERSE_TILE=0.5f;
+    float timeSinceLastAction=0f;
+
     public int playerXPosition=11;
     public int playerYPosition=11;
 
@@ -35,15 +38,21 @@ public class GameManager : MonoBehaviour
     public Sprite cardDepletedSprite;
     
 
-
-
     public float dragSpeed = 500000;
     private Vector3 dragOrigin;
+
+    //Handling movement of player
+    public bool lockActions=false;
+    public bool playerMoving=false;
+    private Vector3 oldPosition;
+    private Vector3 newPosition;
+    private Card cardAfterMovement;
 
     //Camera handling
     private Vector3 cameraVelocity = Vector3.zero;
     public float cameraSmoothTime = 0.1f;
     Camera camera;
+    public Camera UIcamera;
     [SerializeField] Vector3 cameraOffset;
 
     //Camera smooth following
@@ -55,8 +64,28 @@ public class GameManager : MonoBehaviour
 
  
  
-    void Update()
-    {
+    void Update() {
+
+        //Animate the player
+        if (playerMoving) {
+            timeSinceLastAction+=Time.deltaTime;
+            if (timeSinceLastAction<SECONDS_TO_TRAVERSE_TILE) {
+                    playerObject.transform.position=oldPosition+((newPosition-oldPosition)*(timeSinceLastAction/SECONDS_TO_TRAVERSE_TILE));
+            }
+            else {
+                playerObject.transform.position=newPosition;
+                playerMoving=false;
+                lockActions=false;
+                playerXPosition = cardAfterMovement.xCoord;
+                playerYPosition = cardAfterMovement.yCoord;
+                cardAfterMovement.setVisited();
+                CalculateVisibleTiles();
+            }
+        }
+        
+
+
+
         if (Input.GetMouseButtonDown(0))
         {
             dragOrigin = Input.mousePosition;
@@ -75,6 +104,8 @@ public class GameManager : MonoBehaviour
 
     void Start() {
         camera=GameObject.FindWithTag("MainCamera").GetComponent<Camera>();   
+        UIcamera.enabled=false;
+        UIcamera.enabled=true;
         startGame();
     }
 
@@ -118,7 +149,7 @@ public class GameManager : MonoBehaviour
     }
 
     public void updateUI() {
-
+        
     }
 
     public void CalculateVisibleTiles() {
@@ -169,6 +200,7 @@ public class GameManager : MonoBehaviour
 
     public Card getCardFromCoords(int xCoord, int yCoord) {
         int mapSize=((MAP_SIZE_FROM_START*2)+1);
+        Debug.Log("getCardFromCoords - "+(yCoord*mapSize+xCoord));
         return cardsOnMap[yCoord*mapSize+xCoord];
     }
 
@@ -192,5 +224,15 @@ public class GameManager : MonoBehaviour
         score+=modifier;
         checkGameState();
         updateUI();
+    }
+
+    public void movePlayer(Card cardToMoveTo) {
+        newPosition=cardToMoveTo.cardObject.transform.position;
+        oldPosition=playerObject.transform.position;
+        timeSinceLastAction=0f;
+        cardAfterMovement=cardToMoveTo;
+        
+        lockActions=true;
+        playerMoving=true;
     }
 }

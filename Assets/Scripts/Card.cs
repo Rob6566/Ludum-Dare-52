@@ -55,7 +55,8 @@ public class Card
         cardObject.transform.localPosition=new Vector3(xCoord*gameManager.CARD_WIDTH_OFFSET, yCoord*gameManager.CARD_HEIGHT_OFFSET, 0)/*+new Vector3(-550, -475, 0)*/;
         cardObject.transform.localScale=gameManager.BOARD_SCALE;
 
-        CardHandler cardHandler=cardObject.transform.GetChild(0).gameObject.GetComponent<CardHandler>();
+        //CardHandler cardHandler=cardObject./*transform.GetChild(0).gameObject.*/GetComponent<CardHandler>();
+        CardHandler cardHandler=cardObject.GetComponent<CardHandler>();
         cardHandler.init(this);
 
         cardImage = cardObject.transform.GetChild(0).GetChild(1).gameObject.GetComponent<Image>();
@@ -100,6 +101,7 @@ public class Card
     //Whether the player can currently visit this card
     public bool isTraversible() {
         if (visited || !visible) {
+            Debug.Log("Tile not traversible - visited="+visited+", visible="+visible);
             return false;
         }
 
@@ -109,6 +111,7 @@ public class Card
                 return true;
             }
         }
+        Debug.Log("Tile not traversible - no adjacent visible tiles");
         return false;
     }
 
@@ -119,7 +122,7 @@ public class Card
 
     public List<Card> getAdjacentCards() {
         int xMin=0;
-        int xMax=(gameManager.MAP_SIZE_FROM_START*2)+1;
+        int xMax=(gameManager.MAP_SIZE_FROM_START*2);
         int yMin=xMin;
         int yMax=xMax;
 
@@ -127,29 +130,40 @@ public class Card
 
         if (xCoord>xMin) {
             returnCards.Add(gameManager.getCardFromCoords(xCoord-1, yCoord));
+            Debug.Log("Has tile to left");
         }
         if (xCoord<xMax) {
             returnCards.Add(gameManager.getCardFromCoords(xCoord+1, yCoord));
+            Debug.Log("Has tile to right");
         }
         if (yCoord>yMin) {
             returnCards.Add(gameManager.getCardFromCoords(xCoord, yCoord-1));
+            Debug.Log("Has tile below");
         }
         if (yCoord<yMax) {
             returnCards.Add(gameManager.getCardFromCoords(xCoord, yCoord+1));
+            Debug.Log("Has tile above");
         }
         return returnCards;
     }
 
 
     public void onGrab() {
+        if (gameManager.lockActions) {
+            return;
+        }
+    
         gameManager.modifySanity(sanityModifier);
         gameManager.modifyBlood(bloodModifier);
         gameManager.modifyScore(scoreModifier);
         this.customOnGrab();
+        gameManager.movePlayer(this);
     }
 
     public void onPointerEnter() {
-        cardObject.transform.localScale=gameManager.SELECTED_SCALE;
+        if (isTraversible()) {
+            cardObject.transform.localScale=gameManager.SELECTED_SCALE;
+        }
     }
 
     public void onPointerExit() {

@@ -12,12 +12,11 @@ public class CardHandler : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
      }
 
     public void OnPointerClick(PointerEventData eventData) {  
-        Debug.Log("Pointer Click");
         if (!attachedCard.isTraversible()) {
             return;
         }
 
-        //TODO - handle this card
+        attachedCard.onGrab();
     }
 
 
