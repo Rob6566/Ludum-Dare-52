@@ -19,15 +19,23 @@ public class Card
     public bool resetBloodDrain;
     public bool impassable=false;
     public bool visited=false;
+    public bool visible=false;
 
     public int xCoord;
     public int yCoord;
 
     public GameObject cardObject;
 
+    public Image cardImage;
+    public TextMeshProUGUI cardNameUI;
+    public GameObject cardOverlayObject;
+    public Image cardOverlayImage;
+    
+
     public void init(GameManager newGameManager, CardSO newCardSO) {
         gameManager=newGameManager;
         cardSO=newCardSO;
+        sprite=cardSO.sprite;
         cardName=cardSO.cardName;
         textOnGrab=cardSO.textOnGrab;
         cardProbability=cardSO.cardProbability;
@@ -47,6 +55,17 @@ public class Card
         cardObject.transform.localPosition=new Vector3(xCoord*gameManager.CARD_WIDTH_OFFSET, yCoord*gameManager.CARD_HEIGHT_OFFSET, 0)/*+new Vector3(-550, -475, 0)*/;
         cardObject.transform.localScale=gameManager.BOARD_SCALE;
 
+        CardHandler cardHandler=cardObject.transform.GetChild(0).gameObject.GetComponent<CardHandler>();
+        cardHandler.init(this);
+
+        cardImage = cardObject.transform.GetChild(0).GetChild(1).gameObject.GetComponent<Image>();
+            cardImage.sprite=sprite;
+        cardNameUI = cardObject.transform.GetChild(0).GetChild(2).gameObject.GetComponent<TextMeshProUGUI>();
+            cardNameUI.text=cardName;
+        cardOverlayObject = cardObject.transform.GetChild(0).GetChild(3).gameObject;
+        cardOverlayImage=cardOverlayObject.GetComponent<Image>();
+
+        updateUI();
     }
 
     public float getDistanceFromCoords(int x, int y) {
@@ -60,13 +79,30 @@ public class Card
         updateUI();
     }
 
+    public void setVisible() {
+        if (!this.visible) {
+            this.visible=true;
+            updateUI();
+        }
+    }
+
     public void updateUI() {
-        
+        cardOverlayObject.SetActive(this.visited || !this.visible);
+        if (this.visited) {
+            cardOverlayImage.sprite=gameManager.cardDepletedSprite;
+        }
+        else if (!this.visible) {
+            cardOverlayImage.sprite=gameManager.cardBackSprite;
+        }
     }
 
 
-    //Whether the player can immediately visit this card
+    //Whether the player can currently visit this card
     public bool isTraversible() {
+        if (visited || !visible) {
+            return false;
+        }
+
         List<Card> adjacentCards=this.getAdjacentCards();
         foreach(Card thisCard in adjacentCards) {
             if (thisCard.visited) {
@@ -110,6 +146,14 @@ public class Card
         gameManager.modifyBlood(bloodModifier);
         gameManager.modifyScore(scoreModifier);
         this.customOnGrab();
+    }
+
+    public void onPointerEnter() {
+        cardObject.transform.localScale=gameManager.SELECTED_SCALE;
+    }
+
+    public void onPointerExit() {
+        cardObject.transform.localScale=gameManager.BOARD_SCALE;
     }
 
     //Overridden in subclasses

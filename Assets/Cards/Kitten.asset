@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7145e71998ea54b5cbe6af8b5ad156ef, type: 3}
   m_Name: Kitten
   m_EditorClassIdentifier: 
-  cardName: 
+  cardName: Kitten
   textOnGrab: Feral cats mess with the delicately balanced ecosystem. I was doing
     everyone a favour...
-  sprite: {fileID: 0}
+  sprite: {fileID: 21300000, guid: a2683f7180d0f45129ff99bfea33516a, type: 3}
   cardProbability: 10
   sanityModifier: -2
   bloodModifier: 5

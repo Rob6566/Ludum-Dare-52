@@ -153,7 +153,7 @@ Transform:
   m_Children:
   - {fileID: 658854265}
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &519420028
 GameObject:
@@ -322,6 +322,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardPrefab: {fileID: 5955382507723385425, guid: 1dba2fbd249d947a785112e53797c35f, type: 3}
   cardContainer: {fileID: 542171282}
+  playerObject: {fileID: 1694216609}
   score: 0
   sanity: 10
   SANITY_MAX: 10
@@ -335,11 +336,84 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 333dce073d35e4037a1ed6e86f06eca7, type: 2}
   CARD_WIDTH_OFFSET: 200
   CARD_HEIGHT_OFFSET: 230
-  MAP_SIZE_FROM_START: 10
-  playerXPosition: 11
-  playerYPosition: 11
+  MAP_SIZE_FROM_START: 3
+  playerXPosition: 3
+  playerYPosition: 3
   BOARD_SCALE: {x: 1, y: 1, z: 1}
+  SELECTED_SCALE: {x: 1.2, y: 1.2, z: 1.2}
+  cardBackSprite: {fileID: 21300000, guid: 329907e23ebfb4ce5b5f72c5a47afd3f, type: 3}
+  cardDepletedSprite: {fileID: 21300000, guid: 7d7a83e33fc6a4d1ea4b73d5f601ada8, type: 3}
   dragSpeed: 2
+  cameraSmoothTime: 0.1
+  cameraOffset: {x: 0, y: 0, z: -7}
+--- !u!1 &1484819143
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1484819146}
+  - component: {fileID: 1484819145}
+  - component: {fileID: 1484819144}
+  m_Layer: 0
+  m_Name: EventSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1484819144
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1484819143}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f231c4fb786f3946a6b90b886c48677, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SendPointerHoverToParent: 1
+  m_HorizontalAxis: Horizontal
+  m_VerticalAxis: Vertical
+  m_SubmitButton: Submit
+  m_CancelButton: Cancel
+  m_InputActionsPerSecond: 10
+  m_RepeatDelay: 0.5
+  m_ForceModuleActive: 0
+--- !u!114 &1484819145
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1484819143}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_FirstSelected: {fileID: 0}
+  m_sendNavigationEvents: 1
+  m_DragThreshold: 10
+--- !u!4 &1484819146
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1484819143}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -9}
+  m_LocalScale: {x: 0.008865176, y: 0.008865176, z: 0.008865176}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1694216609
 GameObject:
   m_ObjectHideFlags: 0
@@ -352,7 +426,7 @@ GameObject:
   - component: {fileID: 1694216612}
   - component: {fileID: 1694216611}
   m_Layer: 0
-  m_Name: Image
+  m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -365,7 +439,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1694216609}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -510,7 +584,7 @@ RectTransform:
   m_Children:
   - {fileID: 542171283}
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
