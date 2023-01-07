@@ -4,13 +4,13 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 
-//A science class. Abstract superclass - we'll be implementing abilities in sub-classes
-public class Card: MonoBehaviour
+//A card class. Abstract superclass - we can implement custom behaviour in sub-classes
+public class Card
 {
     protected GameManager gameManager;
     protected CardSO cardSO;
     public Sprite sprite;
-    public string name;
+    public string cardName;
     public string textOnGrab;
     public int cardProbability;
     public int sanityModifier;
@@ -28,7 +28,7 @@ public class Card: MonoBehaviour
     public void init(GameManager newGameManager, CardSO newCardSO) {
         gameManager=newGameManager;
         cardSO=newCardSO;
-        name=cardSO.name;
+        cardName=cardSO.cardName;
         textOnGrab=cardSO.textOnGrab;
         cardProbability=cardSO.cardProbability;
         sanityModifier=cardSO.sanityModifier;
@@ -38,13 +38,13 @@ public class Card: MonoBehaviour
         impassable=cardSO.impassable;
     }
 
-    public void instantiateOnMap(GameObject cardPrefab, GameObject parentContainer, int newXCoord, int newYCoord) {
+    public void instantiateOnMap(GameObject newCardObject, GameObject parentContainer, int newXCoord, int newYCoord) {
         xCoord=newXCoord;
         yCoord=newYCoord;
-        cardObject = Instantiate(cardPrefab);
+        cardObject=newCardObject;
 
         cardObject.transform.SetParent(parentContainer.transform);
-        cardObject.transform.localPosition=new Vector3(xCoord, yCoord, 0)+new Vector3(-550, -475, 0);
+        cardObject.transform.localPosition=new Vector3(xCoord*gameManager.CARD_WIDTH_OFFSET, yCoord*gameManager.CARD_HEIGHT_OFFSET, 0)/*+new Vector3(-550, -475, 0)*/;
         cardObject.transform.localScale=gameManager.BOARD_SCALE;
 
     }
@@ -53,6 +53,15 @@ public class Card: MonoBehaviour
         float xDiff=Mathf.Abs(xCoord-x);
         float yDiff=Mathf.Abs(yCoord-y);
         return Mathf.Sqrt(xDiff*xDiff + yDiff*yDiff);
+    }
+
+    public void setVisited() {
+        this.visited=true;
+        updateUI();
+    }
+
+    public void updateUI() {
+        
     }
 
 

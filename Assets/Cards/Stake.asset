@@ -20,7 +20,7 @@ MonoBehaviour:
   bloodModifier: 0
   scoreModifier: 10
   resetBloodDrain: 0
-  cardClass: basicCard
+  cardClass: BasicCard
   impassable: 0
   generationMinRange: 0
   generationMaxRange: 10

@@ -7,6 +7,7 @@ public class GameManager : MonoBehaviour
 {
     public GameObject cardPrefab;
     public GameObject cardContainer;
+    public GameObject playerObject;
     public int score=0;
     public int sanity=10;
     public int SANITY_MAX=10;
@@ -20,14 +21,60 @@ public class GameManager : MonoBehaviour
 
     public List<Card> cardsOnMap = new List<Card>();
 
-    int CARD_WIDTH_OFFSET=200;
-    int CARD_HEIGHT_OFFSET=300;
+    public int CARD_WIDTH_OFFSET=20;
+    public int CARD_HEIGHT_OFFSET=0;
     public int MAP_SIZE_FROM_START=10;
 
     public int playerXPosition=11;
     public int playerYPosition=11;
 
-    public Vector3 BOARD_SCALE = new Vector3(1f, 1f, 1f);
+    public Vector3 BOARD_SCALE = new Vector3(20f, 20f, 20f);
+
+
+
+
+    public float dragSpeed = 500000;
+    private Vector3 dragOrigin;
+
+    //Camera handling
+    private Vector3 cameraVelocity = Vector3.zero;
+    public float cameraSmoothTime = 0.1f;
+    Camera camera;
+    [SerializeField] Vector3 cameraOffset;
+
+    //Camera smooth following
+    private void LateUpdate() {
+        Vector3 targetPosition = playerObject.transform.position+cameraOffset;
+        camera.transform.position = Vector3.SmoothDamp(camera.transform.position, targetPosition, ref cameraVelocity, cameraSmoothTime);
+    }
+
+
+ 
+ 
+    void Update()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            Debug.Log("Draggg");
+            dragOrigin = Input.mousePosition;
+            return;
+        }
+
+        if (!Input.GetMouseButton(0)) return;
+
+        Debug.Log("Draggg 2");
+
+        Vector3 pos = Camera.main.ScreenToViewportPoint(Input.mousePosition - dragOrigin);
+        Vector3 move = new Vector3(pos.x * dragSpeed, 0, pos.y * dragSpeed);
+ 
+        transform.Translate(move, Space.World);  
+    }
+
+
+    void Start() {
+        camera=GameObject.FindWithTag("MainCamera").GetComponent<Camera>();   
+        startGame();
+    }
 
     void startGame() {
         score=0;
@@ -50,15 +97,15 @@ public class GameManager : MonoBehaviour
                 CardSO cardSO=getRandomCard(Mathf.Abs(x)+Mathf.Abs(y), false);
                 Card thisCard = getCardFromSO(cardSO);
                 cardsOnMap.Add(thisCard);
-                thisCard.instantiateOnMap(cardPrefab, cardContainer, x, y);
+                GameObject cardObject = Instantiate(cardPrefab);
+                thisCard.instantiateOnMap(cardObject, cardContainer, x, y);
+                
+                if (x==MAP_SIZE_FROM_START+1 && y==MAP_SIZE_FROM_START+1) {
+                    playerObject.transform.localPosition=new Vector3(x*CARD_WIDTH_OFFSET, y*CARD_HEIGHT_OFFSET, 0);
+                    thisCard.setVisited();
+                }
             }
         }
-    }
-
-
-    void Update()
-    {
-        
     }
 
     //Checks whether the player has won or lost
@@ -67,6 +114,10 @@ public class GameManager : MonoBehaviour
     }
 
     public void updateUI() {
+
+    }
+
+    public void CalculateVisibleTiles() {
 
     }
 
@@ -94,7 +145,6 @@ public class GameManager : MonoBehaviour
             int probabilityMax=thisCard.cardProbability+probabilityMin;
             if (randomNumber>=probabilityMin && randomNumber<probabilityMax) {
     return thisCard;
-                break;
             }
             probabilityMin=probabilityMax;
         }
@@ -104,6 +154,7 @@ public class GameManager : MonoBehaviour
 
     //Create a card based on the class attached to the cardSO
     public Card getCardFromSO(CardSO cardSO) {
+        Debug.Log("getCardFromSO - "+cardSO.cardClass);
         Card newCard = (Card)System.Activator.CreateInstance(System.Type.GetType(cardSO.cardClass));
         newCard.init(this, cardSO);
         return newCard;
