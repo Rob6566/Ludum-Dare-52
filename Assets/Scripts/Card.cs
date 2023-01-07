@@ -16,20 +16,27 @@ public class Card
     public int sanityModifier;
     public int bloodModifier;
     public int scoreModifier;
-    public bool resetBloodDrain;
+    public bool resetBloodthirst;
     public bool impassable=false;
     public bool visited=false;
     public bool visible=false;
 
     public int xCoord;
     public int yCoord;
+    public int cardNumber;
 
     public GameObject cardObject;
 
     public Image cardImage;
+    public Image cardFrontImage;
     public TextMeshProUGUI cardNameUI;
     public GameObject cardOverlayObject;
     public Image cardOverlayImage;
+
+    public TextMeshProUGUI leftBonusUI;
+    public TextMeshProUGUI rightBonusUI;
+    public GameObject leftBonusIMG;
+    public GameObject rightBonusIMG;
     
 
     public void init(GameManager newGameManager, CardSO newCardSO) {
@@ -42,13 +49,14 @@ public class Card
         sanityModifier=cardSO.sanityModifier;
         bloodModifier=cardSO.bloodModifier;
         scoreModifier=cardSO.scoreModifier;
-        resetBloodDrain=cardSO.resetBloodDrain;
+        resetBloodthirst=cardSO.resetBloodthirst;
         impassable=cardSO.impassable;
     }
 
-    public void instantiateOnMap(GameObject newCardObject, GameObject parentContainer, int newXCoord, int newYCoord) {
+    public void instantiateOnMap(GameObject newCardObject, GameObject parentContainer, int newXCoord, int newYCoord, int newCardNumber) {
         xCoord=newXCoord;
         yCoord=newYCoord;
+        cardNumber=newCardNumber;
         cardObject=newCardObject;
 
         cardObject.transform.SetParent(parentContainer.transform);
@@ -59,12 +67,41 @@ public class Card
         CardHandler cardHandler=cardObject.GetComponent<CardHandler>();
         cardHandler.init(this);
 
+        /*
+        public TextMeshProUGUI leftBonusUI;
+    public TextMeshProUGUI rightBonusUI;
+    public GameObject leftBonusIMG;
+    public GameObject rightBonusIMG;*/
+
+
+        cardFrontImage = cardObject.transform.GetChild(0).GetChild(0).gameObject.GetComponent<Image>();
         cardImage = cardObject.transform.GetChild(0).GetChild(1).gameObject.GetComponent<Image>();
             cardImage.sprite=sprite;
         cardNameUI = cardObject.transform.GetChild(0).GetChild(2).gameObject.GetComponent<TextMeshProUGUI>();
             cardNameUI.text=cardName;
-        cardOverlayObject = cardObject.transform.GetChild(0).GetChild(3).gameObject;
+        leftBonusIMG=cardObject.transform.GetChild(0).GetChild(3).gameObject;
+        leftBonusUI=cardObject.transform.GetChild(0).GetChild(4).gameObject.GetComponent<TextMeshProUGUI>();
+        rightBonusIMG=cardObject.transform.GetChild(0).GetChild(5).gameObject;
+        rightBonusUI=cardObject.transform.GetChild(0).GetChild(6).gameObject.GetComponent<TextMeshProUGUI>();
+        
+        
+        cardOverlayObject = cardObject.transform.GetChild(0).GetChild(7).gameObject;
         cardOverlayImage=cardOverlayObject.GetComponent<Image>();
+
+        leftBonusUI.text="";
+        rightBonusUI.text="";
+        if (sanityModifier!=0 || bloodModifier!=0 || scoreModifier!=0) {
+            cardImage.gameObject.transform.localScale=new Vector3(70f, 70f, 70f);
+            cardFrontImage.sprite=gameManager.cardFrontWithEffects;
+            showModifiers();
+        }
+        else {
+            rightBonusIMG.SetActive(false);
+            leftBonusIMG.SetActive(false);
+            cardImage.gameObject.transform.localScale=new Vector3(100f, 100f, 100f);
+            cardFrontImage.sprite=gameManager.cardFrontNoEffects;
+        }
+
 
         updateUI();
     }
@@ -101,7 +138,6 @@ public class Card
     //Whether the player can currently visit this card
     public bool isTraversible() {
         if (visited || !visible) {
-            Debug.Log("Tile not traversible - visited="+visited+", visible="+visible);
             return false;
         }
 
@@ -111,7 +147,6 @@ public class Card
                 return true;
             }
         }
-        Debug.Log("Tile not traversible - no adjacent visible tiles");
         return false;
     }
 
@@ -130,19 +165,15 @@ public class Card
 
         if (xCoord>xMin) {
             returnCards.Add(gameManager.getCardFromCoords(xCoord-1, yCoord));
-            Debug.Log("Has tile to left");
         }
         if (xCoord<xMax) {
             returnCards.Add(gameManager.getCardFromCoords(xCoord+1, yCoord));
-            Debug.Log("Has tile to right");
         }
         if (yCoord>yMin) {
             returnCards.Add(gameManager.getCardFromCoords(xCoord, yCoord-1));
-            Debug.Log("Has tile below");
         }
         if (yCoord<yMax) {
             returnCards.Add(gameManager.getCardFromCoords(xCoord, yCoord+1));
-            Debug.Log("Has tile above");
         }
         return returnCards;
     }
@@ -153,10 +184,10 @@ public class Card
             return;
         }
     
+        this.customOnGrab();
         gameManager.modifySanity(sanityModifier);
         gameManager.modifyBlood(bloodModifier);
         gameManager.modifyScore(scoreModifier);
-        this.customOnGrab();
         gameManager.movePlayer(this);
     }
 
@@ -174,4 +205,50 @@ public class Card
     public virtual void customOnGrab() {
     
     } 
+
+    void showModifiers() {
+
+        bool shownBlood = false;
+        bool shownSanity = false;
+        bool shownScore = false;
+        rightBonusIMG.SetActive(false);
+
+        if(sanityModifier!=0 || bloodModifier!=0 || scoreModifier!=0) {
+            List<string> modsToDisplay=new List<string>();
+            if (sanityModifier!=0) {
+                modsToDisplay.Add("sanity");
+            }
+            if (bloodModifier!=0) {
+                modsToDisplay.Add("blood");
+            }
+            if (scoreModifier!=0) {
+                modsToDisplay.Add("score");
+            }
+
+            int modUpto=0;
+            foreach(string mod in modsToDisplay) {
+                GameObject bonusImg = (modUpto==0 ?  leftBonusIMG : rightBonusIMG);
+                TextMeshProUGUI bonusTxt = (modUpto==0 ?  leftBonusUI : rightBonusUI);
+
+                Sprite modSprite = gameManager.bloodIcon;
+                int modifier = bloodModifier;
+                if (mod=="sanity") {
+                    modSprite = gameManager.sanityIcon;
+                    modifier = sanityModifier;
+                }
+                else if (mod=="score") {
+                    modSprite = gameManager.scoreIcon;
+                    modifier = scoreModifier;
+                }
+                bonusImg.GetComponent<Image>().sprite=modSprite;
+                bonusImg.SetActive(true);
+
+                string colorPrefix = "<b><color=#"+(modifier<0 ? "9A0707" : "0C8C2F")+">";
+                bonusTxt.text = colorPrefix+modifier.ToString()+"</color></b>";
+                modUpto++;
+            }
+
+
+        }
+    }
 }

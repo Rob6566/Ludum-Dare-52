@@ -12,7 +12,7 @@ public class CardSO : ScriptableObject {
     public int sanityModifier = 0;
     public int bloodModifier = 0;
     public int scoreModifier = 0;
-    public bool resetBloodDrain = false;
+    public bool resetBloodthirst = false;
     public string cardClass = "BasicCard";
     public bool impassable = false;
     

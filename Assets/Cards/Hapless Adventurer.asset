@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7145e71998ea54b5cbe6af8b5ad156ef, type: 3}
-  m_Name: Stake
+  m_Name: Hapless Adventurer
   m_EditorClassIdentifier: 
-  cardName: Stake
-  textOnGrab: 
-  sprite: {fileID: 21300000, guid: a2683f7180d0f45129ff99bfea33516a, type: 3}
-  cardProbability: 10
-  sanityModifier: 2
-  bloodModifier: 0
+  cardName: Hapless Adventurer
+  textOnGrab: Before I was bitten, I was a vegetarian. Now, I'm a humanitarian.
+  sprite: {fileID: 21300000, guid: 877d62436eb904c9a8f4178e4e8e520b, type: 3}
+  cardProbability: 50
+  sanityModifier: -3
+  bloodModifier: 10
   scoreModifier: 0
-  resetBloodDrain: 0
+  resetBloodthirst: 1
   cardClass: BasicCard
   impassable: 0
   generationMinRange: 0
-  generationMaxRange: 10
+  generationMaxRange: 500

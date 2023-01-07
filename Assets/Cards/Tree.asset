@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7145e71998ea54b5cbe6af8b5ad156ef, type: 3}
-  m_Name: Stake
+  m_Name: Tree
   m_EditorClassIdentifier: 
-  cardName: Stake
+  cardName: Tree
   textOnGrab: 
-  sprite: {fileID: 21300000, guid: a2683f7180d0f45129ff99bfea33516a, type: 3}
-  cardProbability: 10
-  sanityModifier: 2
+  sprite: {fileID: 21300000, guid: 3a03119eb4b654da896d74e56d707555, type: 3}
+  cardProbability: 20
+  sanityModifier: 0
   bloodModifier: 0
   scoreModifier: 0
   resetBloodDrain: 0
   cardClass: BasicCard
   impassable: 0
   generationMinRange: 0
-  generationMaxRange: 10
+  generationMaxRange: 500

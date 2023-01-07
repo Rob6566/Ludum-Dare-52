@@ -13,14 +13,13 @@ MonoBehaviour:
   m_Name: Kitten
   m_EditorClassIdentifier: 
   cardName: Kitten
-  textOnGrab: Feral cats mess with the delicately balanced ecosystem. I was doing
-    everyone a favour...
+  textOnGrab: No doubt it was hunting wildlife, messing up the delicate ecosystem
   sprite: {fileID: 21300000, guid: a2683f7180d0f45129ff99bfea33516a, type: 3}
   cardProbability: 10
   sanityModifier: -2
   bloodModifier: 5
   scoreModifier: 0
-  resetBloodDrain: 1
+  resetBloodthirst: 1
   cardClass: BasicCard
   impassable: 0
   generationMinRange: 0

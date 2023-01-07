@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
+using UnityEngine.UI;
 
 
 public class GameManager : MonoBehaviour
@@ -8,14 +10,16 @@ public class GameManager : MonoBehaviour
     public GameObject cardPrefab;
     public GameObject cardContainer;
     public GameObject playerObject;
-    public int score=0;
+        public GameObject playerSpeechBubble;
+        public TextMeshProUGUI playerSpeechTxt;
+    public int score=100;
     public int sanity=10;
     public int SANITY_MAX=10;
     public int blood=10;
     public int BLOOD_MAX=100;
     public float visibility_range=5f; //How far we can see
-    public int bloodDepletionRate=0;
-    public int BLOOD_DEPLETION_RATE_MAX=5;
+    public int bloodThirst=0;
+    public int BLOODTHIRST_RATE_MAX=5;
 
     public List<CardSO> availableCards = new List<CardSO>();
 
@@ -36,6 +40,16 @@ public class GameManager : MonoBehaviour
 
     public Sprite cardBackSprite;
     public Sprite cardDepletedSprite;
+    public Sprite cardFrontNoEffects;
+    public Sprite cardFrontWithEffects;
+    public Sprite bloodIcon;
+    public Sprite sanityIcon;
+    public Sprite scoreIcon;
+
+    public TextMeshProUGUI bloodTXT;
+    public TextMeshProUGUI bloodlustTXT;
+    public TextMeshProUGUI sanityTXT;
+    public TextMeshProUGUI scoreTXT;
     
 
     public float dragSpeed = 500000;
@@ -80,6 +94,14 @@ public class GameManager : MonoBehaviour
                 playerYPosition = cardAfterMovement.yCoord;
                 cardAfterMovement.setVisited();
                 CalculateVisibleTiles();
+
+                updateUI();
+                
+                //Speech bubble
+                if (cardAfterMovement.textOnGrab!="") {
+                    playerSpeechBubble.SetActive(true);
+                    playerSpeechTxt.text=cardAfterMovement.textOnGrab;
+                }
             }
         }
         
@@ -110,7 +132,7 @@ public class GameManager : MonoBehaviour
     }
 
     void startGame() {
-        score=0;
+        score=100;
         sanity=10;
         SANITY_MAX=10;
         blood=10;
@@ -125,13 +147,15 @@ public class GameManager : MonoBehaviour
         int xMax=(MAP_SIZE_FROM_START*2);
         int yMin=xMin;
         int yMax=xMax;
-        for(int x=xMin; x<=xMax; x++) {
-            for(int y=yMin; y<=yMax; y++) {
+        int cardUpto=0;
+        for(int y=yMin; y<=yMax; y++) {
+            for(int x=xMin; x<=xMax; x++) {
                 CardSO cardSO=getRandomCard(Mathf.Abs((MAP_SIZE_FROM_START+1)-x)+Mathf.Abs((MAP_SIZE_FROM_START+1)-y), false);
                 Card thisCard = getCardFromSO(cardSO);
                 cardsOnMap.Add(thisCard);
                 GameObject cardObject = Instantiate(cardPrefab);
-                thisCard.instantiateOnMap(cardObject, cardContainer, x, y);
+                thisCard.instantiateOnMap(cardObject, cardContainer, x, y, cardUpto);
+                cardUpto++;
                 
                 if (x==MAP_SIZE_FROM_START && y==MAP_SIZE_FROM_START) {
                     playerObject.transform.localPosition=new Vector3(x*CARD_WIDTH_OFFSET, y*CARD_HEIGHT_OFFSET, 0);
@@ -149,7 +173,10 @@ public class GameManager : MonoBehaviour
     }
 
     public void updateUI() {
-        
+        bloodTXT.text="Blood: "+blood.ToString()+"/"+BLOOD_MAX.ToString();
+        bloodlustTXT.text="Bloodthirst: "+bloodThirst;
+        sanityTXT.text="Sanity: "+sanity.ToString()+"/"+SANITY_MAX.ToString();
+        scoreTXT.text="Score: "+score.ToString();
     }
 
     public void CalculateVisibleTiles() {
@@ -215,7 +242,7 @@ public class GameManager : MonoBehaviour
     public void modifyBlood(int modifier) {
         blood+=modifier;
         blood=Mathf.Min(blood, BLOOD_MAX);
-        sanity=Mathf.Max(blood, 0);
+        blood=Mathf.Max(blood, 0);
         checkGameState();
         updateUI();
     }
@@ -227,6 +254,23 @@ public class GameManager : MonoBehaviour
     }
 
     public void movePlayer(Card cardToMoveTo) {
+
+        //Blood movement cost
+        int bloodCost = Mathf.Max(cardToMoveTo.distanceFromPlayer(playerXPosition, playerYPosition)-1, 0);
+        bloodCost+=bloodThirst;
+        blood-=bloodCost;
+
+        //Modify bloodthirst
+        if(cardToMoveTo.resetBloodthirst) {
+            bloodThirst=0;
+        }
+        else {
+            bloodThirst=Mathf.Min(bloodThirst+1, BLOODTHIRST_RATE_MAX);
+        }
+
+        updateUI();
+
+        
         newPosition=cardToMoveTo.cardObject.transform.position;
         oldPosition=playerObject.transform.position;
         timeSinceLastAction=0f;
@@ -234,5 +278,7 @@ public class GameManager : MonoBehaviour
         
         lockActions=true;
         playerMoving=true;
+        playerSpeechBubble.SetActive(false);
+        playerSpeechTxt.text="";
     }
 }
