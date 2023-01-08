@@ -81,6 +81,21 @@ public class GameManager : MonoBehaviour
     private int scoreLostFromMovement=0;
 
 
+    //Intro screen controls
+    bool runningIntro=false;
+    public Image introImage;
+    public GameObject introOverlay;
+    public GameObject introButton;
+    public TextMeshProUGUI introText;
+    int introStep=0;
+    bool introFading=false;
+    bool introFadeDidSwitch=false;
+    float timeSinceIntroFadeStart=0f;
+    float INTRO_FADE_DURATION=1f;
+    float INTRO_FADE_WAIT_DURATION=0.5f;
+    public List<Sprite> introImages = new List<Sprite>();
+
+
     //Camera handling
     private Vector3 cameraVelocity = Vector3.zero;
     public float cameraSmoothTime = 0.1f;
@@ -89,6 +104,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] Vector3 cameraOffset;
     bool manuallyOperatingCamera=false;
     float CAMERA_MANUAL_MOVE_SPEED = 5f;
+
+    //Canvasses
+    public List<GameObject> canvasses = new List<GameObject>();
 
     //Camera smooth following
     private void LateUpdate() {
@@ -102,6 +120,8 @@ public class GameManager : MonoBehaviour
  
  
     void Update() {
+        runIntroFade();
+
         if (gameOver) {
             return;
         }
@@ -157,16 +177,112 @@ public class GameManager : MonoBehaviour
         }
     }
 
-
+    //Auto-runs when game starts
     void Start() {
         camera=GameObject.FindWithTag("MainCamera").GetComponent<Camera>();   
+        camera.backgroundColor=Color.white;
         UIcamera.enabled=false;
         UIcamera.enabled=true;
         winLossOverlay.SetActive(false);
-        startGame();
+
+        setCanvasStatus("SplashCanvas", true);
     }
 
-    void startGame() {
+    public void Intro() {
+        introStep=0;
+        runningIntro=true;
+        setCanvasStatus("IntroCanvas", true);
+        introOverlay.SetActive(false);
+        introButton.SetActive(true);
+        introFading=false;
+    }
+
+    public void ProgressIntro() {
+        introStep++;
+
+        if (introStep==5) {
+            startGame();
+            return;
+        }
+
+        introFading=true;
+        introFadeDidSwitch=false;
+        timeSinceIntroFadeStart=0f;
+        introButton.SetActive(false);
+
+        if (introStep<2) {
+            introOverlay.GetComponent<Image>().color = Color.white;
+        }
+        else if(introStep==3) {
+            introOverlay.GetComponent<Image>().color = Color.red;
+        }
+        else if(introStep==4) {
+            introOverlay.GetComponent<Image>().color = Color.black;
+        }
+    }
+
+    //Runs on every frame to fade the intro scenes in and out
+    void runIntroFade() {
+        if (!runningIntro || !introFading) {
+            return;
+        }
+
+        timeSinceIntroFadeStart+=Time.deltaTime;
+
+        /*float INTRO_FADE_DURATION=1f;
+          float INTRO_FADE_WAIT_DURATION=1f;*/
+
+
+        Image introOverlayImage = introOverlay.GetComponent<Image>();
+        if (timeSinceIntroFadeStart<INTRO_FADE_DURATION) {
+            introOverlay.SetActive(true);
+            Color32 introColour=introOverlayImage.color;
+            introColour.a=(byte)(255*(timeSinceIntroFadeStart/INTRO_FADE_DURATION));
+            introOverlayImage.color=introColour;
+        }
+        else if (!introFadeDidSwitch) {
+            //Swap over the page we're viewing
+
+            introImage.sprite=introImages[introStep];
+            if (introStep==1) {
+                introText.text="One day, after a big harvest, you partake in some of your mushrooms.<br><br>Arriving home befuddled, you forget to hang up your garlic ward.";
+            }
+            else if (introStep==2) {
+                introText.text="In your slumber, you're bitten by a vampire!<br><br>Your eyes glaze with bloodlust, your fangs lengthen, your skin starts to sparkle (??).";
+                camera.backgroundColor=Color.red;
+            }
+            else if (introStep==3) {
+                introText.text="<color=#ffffff>You know that you cannot rest until you've harvested enough blood to quench your burning thirst.</color>";
+                camera.backgroundColor=Color.black;
+            }
+            else if (introStep==4) {
+                introText.text="<color=#ffffff>Click tiles to move. WASD can override camera.<br><br>Get to 100 Blood.<br><br>Keep Sanity and Blood above 0.</color>";
+                camera.backgroundColor=Color.black;
+                introButton.transform.GetChild(0).gameObject.GetComponent<TextMeshProUGUI>().text="Start";
+            }
+
+
+            introFadeDidSwitch=true;
+        }
+
+        float timeSinceFadeOutStart=timeSinceIntroFadeStart-INTRO_FADE_DURATION-INTRO_FADE_WAIT_DURATION;
+        if (timeSinceFadeOutStart>0) {
+            if (timeSinceFadeOutStart>INTRO_FADE_DURATION) {
+                introFading=false;
+                introButton.SetActive(true);
+                introOverlay.SetActive(false);
+            }
+            else {
+                Color32 introColour=introOverlayImage.color;
+                introColour.a=(byte)(255*(1f-(timeSinceFadeOutStart/INTRO_FADE_DURATION)));
+                introOverlayImage.color=introColour;
+            }
+        }
+
+    }
+
+
+    public void startGame() {
         score=100;
         sanity=5;
         SANITY_MAX=10;
@@ -180,6 +296,13 @@ public class GameManager : MonoBehaviour
         scoreFromItems=0;
         scoreLostFromMovement=0;
         gameOver=false;
+        runningIntro=false;
+        introFading=false;
+        
+        camera.backgroundColor=Color.black;
+
+        setCanvasStatus("GameCanvas", true);
+        setCanvasStatus("ControlPanelCanvas", true, false);
 
         generateMap();
     }
@@ -376,5 +499,16 @@ public class GameManager : MonoBehaviour
         manuallyOperatingCamera=false;
         playerSpeechBubble.SetActive(false);
         playerSpeechTxt.text="";
+    }
+
+    void setCanvasStatus(string canvasTag, bool newState, bool hideOthers=true) {
+        foreach(GameObject thisCanvas in canvasses) {
+            if (thisCanvas.tag==canvasTag) {
+                thisCanvas.SetActive(newState);
+            }
+            else if (hideOthers) {
+                thisCanvas.SetActive(false);
+            }
+        }
     }
 }

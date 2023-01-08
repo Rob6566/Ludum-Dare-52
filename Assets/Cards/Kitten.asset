@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7145e71998ea54b5cbe6af8b5ad156ef, type: 3}
   m_Name: Kitten
   m_EditorClassIdentifier: 
-  cardName: Terrifying Kitten
+  cardName: Cute Kitten
   textOnGrab: No doubt it was hunting wildlife, messing up the delicate ecosystem
   sprite: {fileID: 21300000, guid: 798f05747290b4f3e87009da8fef4c5d, type: 3}
   cardProbability: 10
