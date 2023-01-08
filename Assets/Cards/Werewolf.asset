@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardName: Werewolf
   textOnGrab: Bad dog
-  sprite: {fileID: 21300000, guid: 3f10a2ef46b7a4725923af75c6cd11fb, type: 3}
+  sprite: {fileID: 21300000, guid: 48042eae2d28f4037a44661de64009a1, type: 3}
   cardProbability: 5
   sanityModifier: -4
   bloodModifier: 30
@@ -22,5 +22,5 @@ MonoBehaviour:
   resetBloodthirst: 1
   cardClass: BasicCard
   impassable: 0
-  generationMinRange: 6
+  generationMinRange: 4
   generationMaxRange: 500

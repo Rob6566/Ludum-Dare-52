@@ -22,5 +22,5 @@ MonoBehaviour:
   resetBloodthirst: 0
   cardClass: BasicCard
   impassable: 0
-  generationMinRange: 6
+  generationMinRange: 4
   generationMaxRange: 500

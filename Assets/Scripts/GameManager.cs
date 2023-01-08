@@ -4,7 +4,26 @@ using UnityEngine.SceneManagement;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.Networking;
+using Newtonsoft.Json.Linq;
+using System.Text.RegularExpressions;
 
+
+[System.Serializable]
+public class HighScore {
+    public string name;
+    public string score;
+    public HighScore(string _name, string _score) {
+        name = _name;
+        score = _score;
+    }
+}
+
+[System.Serializable]
+public class HighScoreData
+{
+    public List<HighScore> scores;
+}
 
 public class GameManager : MonoBehaviour
 {
@@ -77,6 +96,7 @@ public class GameManager : MonoBehaviour
     private int statDistanceMoved=0;
     private int statBloodSpentOnMovement=0;
     private int statSanityGained=0;
+    private int statMoves=0;
     private int scoreFromItems=0;
     private int scoreLostFromMovement=0;
 
@@ -107,6 +127,22 @@ public class GameManager : MonoBehaviour
 
     //Canvasses
     public List<GameObject> canvasses = new List<GameObject>();
+
+    //High Scores
+    public const string SERVER_URL ="https://ldjam51.rob6566.click/LudumDare-server/";
+    public const string SCORES_URL="scores.php?game_id=ludum52";
+    public const string ADD_SCORE_URL="add_score.php";
+    public GameObject scorePrefab;
+    public GameObject scoreHolder;
+    string playerName;
+    public TMP_InputField playerNameInput;
+    public GameObject invalidName;
+
+    //Blood cost overlay
+    public GameObject bloodCostOverlay;
+    public TextMeshProUGUI bloodCostTXT;
+
+
 
     //Camera smooth following
     private void LateUpdate() {
@@ -184,11 +220,18 @@ public class GameManager : MonoBehaviour
         UIcamera.enabled=false;
         UIcamera.enabled=true;
         winLossOverlay.SetActive(false);
+        invalidName.SetActive(false);
 
         setCanvasStatus("SplashCanvas", true);
+
+        StartCoroutine(LoadScores());
     }
 
     public void Intro() {
+        if (!validateName()) {
+            return;
+        }
+
         introStep=0;
         runningIntro=true;
         setCanvasStatus("IntroCanvas", true);
@@ -252,11 +295,11 @@ public class GameManager : MonoBehaviour
                 camera.backgroundColor=Color.red;
             }
             else if (introStep==3) {
-                introText.text="<color=#ffffff>You know that you cannot rest until you've harvested enough blood to quench your burning thirst.</color>";
+                introText.text="<color=#ffffff>You know you cannot rest until you've harvested enough blood to quench your burning thirst.</color>";
                 camera.backgroundColor=Color.black;
             }
             else if (introStep==4) {
-                introText.text="<color=#ffffff>Click tiles to move. WASD can override camera.<br><br>Get to 100 Blood.<br><br>Keep Sanity and Blood above 0.</color>";
+                introText.text="<color=#ffffff>Click tiles to move. WASD overrides the camera.<br><br>Get to 100 Blood.<br><br>Keep Sanity and Blood above 0.</color>";
                 camera.backgroundColor=Color.black;
                 introButton.transform.GetChild(0).gameObject.GetComponent<TextMeshProUGUI>().text="Start";
             }
@@ -283,6 +326,10 @@ public class GameManager : MonoBehaviour
 
 
     public void startGame() {
+        if (!validateName()) {
+            return;
+        }
+
         score=100;
         sanity=5;
         SANITY_MAX=10;
@@ -293,13 +340,17 @@ public class GameManager : MonoBehaviour
         statDistanceMoved=0;
         statBloodSpentOnMovement=0;
         statSanityGained=0;
+        statMoves=0;
         scoreFromItems=0;
         scoreLostFromMovement=0;
         gameOver=false;
         runningIntro=false;
         introFading=false;
+        manuallyOperatingCamera=false;
         
         camera.backgroundColor=Color.black;
+
+        bloodCostOverlay.SetActive(false);
 
         setCanvasStatus("GameCanvas", true);
         setCanvasStatus("ControlPanelCanvas", true, false);
@@ -339,6 +390,10 @@ public class GameManager : MonoBehaviour
 
     //Checks whether the player has won or lost
     void checkGameState() {
+        if (gameOver) {
+            return;
+        }
+        
         bool lostDueToSanity=false;
         bool won=false;
         if (blood<0) {
@@ -365,6 +420,7 @@ public class GameManager : MonoBehaviour
 
             winLoseStatsTXT.text=
             "Blood Harvested: "+statBloodHarvested.ToString()+
+            "<br>Actions Taken: "+statMoves.ToString()+
             "<br>Distance Moved: "+statDistanceMoved.ToString()+
             "<br>Blood spent on movement: "+statBloodSpentOnMovement.ToString()+
             "<br>Sanity gained: "+statSanityGained.ToString()+
@@ -372,6 +428,8 @@ public class GameManager : MonoBehaviour
             "<br>Score lost from movement: "+scoreLostFromMovement.ToString();
 
             winLoseScoreTXT.text="Score: "+score.ToString();
+
+            StartCoroutine(SaveScore());
         }
     }
 
@@ -475,6 +533,11 @@ public class GameManager : MonoBehaviour
         blood-=bloodCost;
 
         statBloodSpentOnMovement+=bloodCost;
+        statMoves++;
+
+        int scoreToLose=((int)statMoves / 15) + 1;
+        scoreLostFromMovement+=scoreToLose;
+        score-=scoreToLose;
 
         //Modify bloodthirst
         if(cardToMoveTo.resetBloodthirst) {
@@ -511,4 +574,99 @@ public class GameManager : MonoBehaviour
             }
         }
     }
+
+
+
+    IEnumerator SaveScore() {
+        
+        WWWForm form = new WWWForm();
+        form.AddField("user_name", playerName);
+        form.AddField("score", score);
+        form.AddField("game_id", "ludum52");
+
+        using (UnityWebRequest webRequest = UnityWebRequest.Post(SERVER_URL+ADD_SCORE_URL, form)) {
+            // Request and wait for the desired page.
+            //webRequest.SetRequestHeader("secretkey", "12345");
+            yield return webRequest.SendWebRequest();
+
+            switch (webRequest.result) {
+                case UnityWebRequest.Result.ConnectionError:
+                case UnityWebRequest.Result.DataProcessingError:
+                case UnityWebRequest.Result.ProtocolError:
+                    break;
+                case UnityWebRequest.Result.Success:
+                    break;
+            }
+        }
+    }
+
+    IEnumerator LoadScores() {
+        
+         //webRequest= new UnityWebRequest();
+        string uri=SERVER_URL+SCORES_URL;
+        using (UnityWebRequest webRequest = UnityWebRequest.Get(uri))
+        {
+            // Request and wait for the desired page.
+            //webRequest.SetRequestHeader("secretkey", "12345");
+            yield return webRequest.SendWebRequest();
+
+            string[] pages = uri.Split('/');
+            int page = pages.Length - 1;
+
+            switch (webRequest.result) {
+                case UnityWebRequest.Result.ConnectionError:
+                case UnityWebRequest.Result.DataProcessingError:
+                    Debug.LogError(pages[page] + ": Error: " + webRequest.error);
+                    break;
+                case UnityWebRequest.Result.ProtocolError:
+                    Debug.LogError(pages[page] + ": HTTP Error: " + webRequest.error);
+                    break;
+                case UnityWebRequest.Result.Success:
+                    Debug.Log(pages[page] + ":\nReceived: " + webRequest.downloadHandler.text);
+
+                    
+                    string jsonString=webRequest.downloadHandler.text;
+                    var data = JsonUtility.FromJson<HighScoreData>(jsonString);
+                    int scoreUpto=0;
+                    foreach (HighScore thisScore in data.scores) {
+                        if (scoreUpto>10) {
+                            break;
+                        }
+
+                        GameObject gameObject = Instantiate(scorePrefab);
+
+                        gameObject.transform.SetParent(scoreHolder.transform);      
+                        gameObject.transform.localPosition=new Vector3(-25, 35-(50*scoreUpto), 0);
+                        gameObject.transform.localScale=new Vector3(1f, 1f, 1f);
+                        TextMeshProUGUI txtName = gameObject.transform.GetChild(0).gameObject.GetComponent<TextMeshProUGUI>();
+                            txtName.text=thisScore.name;
+                        TextMeshProUGUI txtScore = gameObject.transform.GetChild(1).gameObject.GetComponent<TextMeshProUGUI>();
+                            txtScore.text=thisScore.score;
+                        scoreUpto++;
+                    }
+                    break;
+            }
+        }
+    }
+
+
+    public bool validateName() {
+
+        string tempPlayerName=playerNameInput.text;
+        tempPlayerName=tempPlayerName.Trim();
+        if (tempPlayerName.Length>30 || tempPlayerName.Length<2) {
+            invalidName.SetActive(true);
+            return false;
+        }
+        else if (!Regex.IsMatch(tempPlayerName, "^[a-zA-Z0-9 ]*$")) {
+            invalidName.SetActive(true);
+            return false;
+        }
+        else {
+            playerName=tempPlayerName;
+            return true;
+        }
+    }
+
+
 }

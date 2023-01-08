@@ -194,11 +194,22 @@ public class Card
     public void onPointerEnter() {
         if (isTraversible() && !gameManager.gameOver) {
             cardObject.transform.localScale=gameManager.SELECTED_SCALE;
+            gameManager.bloodCostOverlay.SetActive(true);
+            gameManager.bloodCostOverlay.transform.SetParent(cardObject.transform);
+            gameManager.bloodCostOverlay.transform.localPosition= new Vector3(0,0,0);
+            gameManager.bloodCostOverlay.transform.localScale= gameManager.BOARD_SCALE;
+            gameManager.bloodCostOverlay.transform.SetParent(gameManager.cardContainer.transform);
+            gameManager.bloodCostOverlay.transform.SetAsLastSibling();
+            int bloodCost=gameManager.bloodThirst;
+            int distanceCost=distanceFromPlayer(gameManager.playerXPosition, gameManager.playerYPosition)-1;
+            bloodCost+=distanceCost;
+            gameManager.bloodCostTXT.text="Blood cost - "+bloodCost.ToString()+" ("+distanceCost.ToString()+" Distance, "+gameManager.bloodThirst.ToString()+" Bloodthirst)";
         }
     }
 
     public void onPointerExit() {
         cardObject.transform.localScale=gameManager.BOARD_SCALE;
+        gameManager.bloodCostOverlay.SetActive(false);
     }
 
     //Overridden in subclasses

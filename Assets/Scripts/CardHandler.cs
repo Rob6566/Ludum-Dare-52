@@ -22,7 +22,6 @@ public class CardHandler : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
      /************************* 3. HOVERING *************************/
     public void OnPointerEnter(PointerEventData eventData) {
-       Debug.Log("Pointer Enter");
        attachedCard.onPointerEnter();
     }
 
