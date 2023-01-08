@@ -88,6 +88,7 @@ public class GameManager : MonoBehaviour
     public Camera UIcamera;
     [SerializeField] Vector3 cameraOffset;
     bool manuallyOperatingCamera=false;
+    float CAMERA_MANUAL_MOVE_SPEED = 5f;
 
     //Camera smooth following
     private void LateUpdate() {
@@ -129,23 +130,31 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
-        
+        else {
+            bool moveCamera=false;
+            Vector3 cameraDirection = new Vector3(0, 1, 0);
+            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) {
+                moveCamera=true;
+                cameraDirection=new Vector3(0, 1, 0);
+            }
+            else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) {
+                moveCamera=true;
+                cameraDirection=new Vector3(0, -1, 0);
+            }
+            else if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) {
+                moveCamera=true;
+                cameraDirection=new Vector3(-1, 0, 0);
+            }
+            else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) {
+                moveCamera=true;
+                cameraDirection=new Vector3(1, 0, 0);
+            }
 
-
-/* //Attempt to Drag to move camera. Going to implement as WASD
-        if (Input.GetMouseButtonDown(0))
-        {
-            dragOrigin = Input.mousePosition;
-            return;
+            if (moveCamera) {
+                manuallyOperatingCamera=true;
+                camera.transform.position=camera.transform.position+(cameraDirection*Time.deltaTime*CAMERA_MANUAL_MOVE_SPEED);
+            }
         }
-
-        if (!Input.GetMouseButton(0)) return;
-
-
-        Vector3 pos = Camera.main.ScreenToViewportPoint(Input.mousePosition - dragOrigin);
-        Vector3 move = new Vector3(pos.x * dragSpeed, 0, pos.y * dragSpeed);
- 
-        transform.Translate(move, Space.World);  */
     }
 
 
