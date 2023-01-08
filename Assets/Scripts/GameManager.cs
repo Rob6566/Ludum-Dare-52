@@ -81,6 +81,8 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI bloodlustTXT;
     public TextMeshProUGUI sanityTXT;
     public TextMeshProUGUI scoreTXT;
+
+    public TextMeshProUGUI scoreObjectiveTXT;
     
 
     public float dragSpeed = 500000;
@@ -371,6 +373,7 @@ public class GameManager : MonoBehaviour
         if (!complexMode) {
             cardFrontWithEffects=cardFrontWithEffectsBasic;
             cardFrontNoEffects=cardFrontNoEffectsBasic;
+            scoreObjectiveTXT.text="Optional:  Increase score by winning in less moves and picking up scoring items";
         }
         complexModeUIContainer.SetActive(complexMode);
 
