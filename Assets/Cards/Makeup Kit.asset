@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7145e71998ea54b5cbe6af8b5ad156ef, type: 3}
-  m_Name: Stake
+  m_Name: Makeup Kit
   m_EditorClassIdentifier: 
-  cardName: Stake
-  textOnGrab: 
-  sprite: {fileID: 21300000, guid: a2683f7180d0f45129ff99bfea33516a, type: 3}
-  cardProbability: 10
+  cardName: Makeup kit
+  textOnGrab: Now my lips match my eyes
+  sprite: {fileID: 21300000, guid: bc20440f1e5fc4c7784bca4a5b300470, type: 3}
+  cardProbability: 5
   sanityModifier: 2
   bloodModifier: 0
   scoreModifier: 0
-  resetBloodDrain: 0
+  resetBloodthirst: 0
   cardClass: BasicCard
   impassable: 0
-  generationMinRange: 0
-  generationMaxRange: 10
+  generationMinRange: 2
+  generationMaxRange: 500

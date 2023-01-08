@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7145e71998ea54b5cbe6af8b5ad156ef, type: 3}
-  m_Name: Kitten
+  m_Name: Blood Bank
   m_EditorClassIdentifier: 
-  cardName: Terrifying Kitten
-  textOnGrab: No doubt it was hunting wildlife, messing up the delicate ecosystem
-  sprite: {fileID: 21300000, guid: 798f05747290b4f3e87009da8fef4c5d, type: 3}
-  cardProbability: 10
-  sanityModifier: -1
-  bloodModifier: 5
+  cardName: Blood Bank
+  textOnGrab: I don't remember this being here. I wonder if they have a sanity bank...
+  sprite: {fileID: 21300000, guid: 21e2be51bc70f4c4cbf44859ab871ec8, type: 3}
+  cardProbability: 5
+  sanityModifier: -3
+  bloodModifier: 20
   scoreModifier: 0
   resetBloodthirst: 1
   cardClass: BasicCard
   impassable: 0
-  generationMinRange: 0
-  generationMaxRange: 50
+  generationMinRange: 5
+  generationMaxRange: 500
