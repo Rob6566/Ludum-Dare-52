@@ -8,6 +8,8 @@ using UnityEngine.Networking;
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
 
+public enum CardSuit {hearts, diamonds, spades, clubs};
+
 
 [System.Serializable]
 public class HighScore {
@@ -17,6 +19,12 @@ public class HighScore {
         name = _name;
         score = _score;
     }
+}
+
+[System.Serializable]
+public class SuitedCard {
+    public int cardNumber;
+    public CardSuit cardSuit;
 }
 
 [System.Serializable]
@@ -62,6 +70,9 @@ public class GameManager : MonoBehaviour
     public Sprite cardDepletedSprite;
     public Sprite cardFrontNoEffects;
     public Sprite cardFrontWithEffects;
+    public Sprite cardFrontNoEffectsBasic;
+    public Sprite cardFrontWithEffectsBasic;
+
     public Sprite bloodIcon;
     public Sprite sanityIcon;
     public Sprite scoreIcon;
@@ -97,6 +108,7 @@ public class GameManager : MonoBehaviour
     private int statBloodSpentOnMovement=0;
     private int statSanityGained=0;
     private int statMoves=0;
+    private int scoreFromCards=0;
     private int scoreFromItems=0;
     private int scoreLostFromMovement=0;
 
@@ -141,6 +153,31 @@ public class GameManager : MonoBehaviour
     //Blood cost overlay
     public GameObject bloodCostOverlay;
     public TextMeshProUGUI bloodCostTXT;
+
+
+    //Since cards aren't fully featured, we allow users to turn them off 
+    public bool complexMode = false;
+
+    //Card Suits
+    public List<Sprite> cardSuitSprites = new List<Sprite>();
+    public List<SuitedCard> recentCards = new List<SuitedCard>();
+    public GameObject cardSuitPrefab;
+    public GameObject cardSuitContainer;
+    public GameObject starFlush;
+    public GameObject starStraight;
+    public GameObject starSet;
+    public TextMeshProUGUI txtFlush;
+    public TextMeshProUGUI txtStraight;
+    public TextMeshProUGUI txtSet;
+    private int pendingFlushPoints;
+    private int pendingStraightPoints;
+    private int pendingSetPoints;
+    private List<int> flushScores=new List<int>{0,0,0,5,10,20,40,80,160};
+    private List<int> straightScores=new List<int>{0,0,0,10,20,40,80,160,320};
+    private List<int> setScores=new List<int>{0,0,5,10,20,40,80,160,320};
+
+    public Toggle complexModeToggle;
+    public GameObject complexModeUIContainer;
 
 
 
@@ -330,6 +367,14 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        complexMode=complexModeToggle.isOn;
+        if (!complexMode) {
+            cardFrontWithEffects=cardFrontWithEffectsBasic;
+            cardFrontNoEffects=cardFrontNoEffectsBasic;
+        }
+        complexModeUIContainer.SetActive(complexMode);
+
+
         score=100;
         sanity=5;
         SANITY_MAX=10;
@@ -352,8 +397,17 @@ public class GameManager : MonoBehaviour
 
         bloodCostOverlay.SetActive(false);
 
+        List<SuitedCard> recentCards = new List<SuitedCard>();
+
         setCanvasStatus("GameCanvas", true);
         setCanvasStatus("ControlPanelCanvas", true, false);
+
+        starFlush.SetActive(false);
+        starStraight.SetActive(false);
+        starSet.SetActive(false);
+        txtFlush.text="";
+        txtStraight.text="";
+        txtSet.text="";
 
         generateMap();
     }
@@ -386,6 +440,7 @@ public class GameManager : MonoBehaviour
         }
         playerObject.transform.SetAsLastSibling();
         CalculateVisibleTiles();
+        updateUI();
     }
 
     //Checks whether the player has won or lost
@@ -482,7 +537,7 @@ public class GameManager : MonoBehaviour
     //Create a card based on the class attached to the cardSO
     public Card getCardFromSO(CardSO cardSO) {
         Card newCard = (Card)System.Activator.CreateInstance(System.Type.GetType(cardSO.cardClass));
-        newCard.init(this, cardSO);
+        newCard.init(this, cardSO, getRandomSuitedCard());
         return newCard;
     }
 
@@ -535,7 +590,7 @@ public class GameManager : MonoBehaviour
         statBloodSpentOnMovement+=bloodCost;
         statMoves++;
 
-        int scoreToLose=((int)statMoves / 15) + 1;
+        int scoreToLose=((int)statMoves / 35) + 1;
         scoreLostFromMovement+=scoreToLose;
         score-=scoreToLose;
 
@@ -546,11 +601,6 @@ public class GameManager : MonoBehaviour
         else {
             bloodThirst=Mathf.Min(bloodThirst+1, BLOODTHIRST_RATE_MAX);
         }
-
-        checkGameState();
-
-        updateUI();
-
         
         newPosition=cardToMoveTo.cardObject.transform.position;
         oldPosition=playerObject.transform.position;
@@ -562,6 +612,130 @@ public class GameManager : MonoBehaviour
         manuallyOperatingCamera=false;
         playerSpeechBubble.SetActive(false);
         playerSpeechTxt.text="";
+
+
+        //Display Suited Card if we're in complex mode
+        if (complexMode) {
+            
+            GameObject cardSuitObject = Instantiate(cardSuitPrefab);
+            cardSuitObject.transform.SetParent(cardSuitContainer.transform);
+            cardSuitObject.transform.localScale=new Vector3(1f, 1f, 1f);
+            cardSuitObject.transform.SetAsFirstSibling();
+            
+            GameObject cardSuitIMG=cardSuitObject.transform.GetChild(0).gameObject;
+            TextMeshProUGUI cardSuitTXT=cardSuitObject.transform.GetChild(1).gameObject.GetComponent<TextMeshProUGUI>();
+
+            cardSuitIMG.GetComponent<Image>().sprite=cardSuitSprites[(int)cardToMoveTo.suitedCard.cardSuit];
+            cardSuitTXT.text=cardToMoveTo.suitedCard.cardNumber.ToString();
+            cardSuitTXT.color=((int)cardToMoveTo.suitedCard.cardSuit<2) ? Color.black : Color.red;
+
+            //Destroy our 9th suited card if we have too many
+            if (cardSuitContainer.transform.childCount>8) {
+                Destroy(cardSuitContainer.transform.GetChild(8).gameObject);
+            }
+
+            //Add the new suited card to our list
+            recentCards.Insert(0, cardToMoveTo.suitedCard);
+            if (recentCards.Count>8) {
+                recentCards.RemoveAt(8);
+            }
+
+            
+            
+            //Calculate flushes
+            CardSuit currentSuit=recentCards[0].cardSuit;
+            int flushCount=0;
+            foreach(SuitedCard thisCard in recentCards) {
+                if (thisCard.cardSuit==currentSuit) {
+                    flushCount++;
+                }
+                else {
+                    break;
+                }
+            }
+
+            int flushPoints=flushScores[flushCount];
+            if (flushPoints==0 && pendingFlushPoints>0) {
+                score+=pendingFlushPoints;
+                scoreFromCards+=pendingFlushPoints;
+                pendingFlushPoints=0;
+            }
+            else if (flushPoints>0) {
+                pendingFlushPoints=flushPoints;
+            }
+
+            starFlush.SetActive(pendingFlushPoints>0);
+            txtFlush.text=(pendingFlushPoints>0 ? "Flush ("+flushCount.ToString()+" cards) - "+flushPoints.ToString()+" points" : "");
+
+
+        
+        
+            //Calculate sets
+            int currentNumber=recentCards[0].cardNumber;
+            int setCount=0;
+            foreach(SuitedCard thisCard in recentCards) {
+                if (thisCard.cardNumber==currentNumber) {
+                    setCount++;
+                }
+                else {
+                    break;
+                }
+            }
+
+            int setPoints=setScores[setCount];
+            if (setPoints==0 && pendingSetPoints>0) {
+                score+=pendingSetPoints;
+                scoreFromCards+=pendingSetPoints;
+                pendingSetPoints=0;
+            }
+            else if (setPoints>0) {
+                pendingSetPoints=setPoints;
+            }
+
+            starSet.SetActive(pendingSetPoints>0);
+            txtSet.text=(pendingSetPoints>0 ? "Set ("+setCount.ToString()+" "+currentNumber.ToString()+"s) - "+setPoints.ToString()+" points" : "");
+
+
+            
+            
+            //Calculate straights
+            if (recentCards.Count>1) {
+                int currentDirection=recentCards[1].cardNumber-recentCards[0].cardNumber; //5 6 7  - currentDirection=1
+                currentNumber=recentCards[0].cardNumber-currentDirection;
+                int straightCount=0;
+                if (currentDirection==1 || currentDirection==-1) {
+                    foreach(SuitedCard thisCard in recentCards) {
+                        if (thisCard.cardNumber==currentNumber+currentDirection) {
+                            straightCount++;
+                            currentNumber+=currentDirection;
+                        }
+                        else {
+                            break;
+                        }
+                    }
+                }
+                
+
+                int straightPoints=straightScores[straightCount];
+                if (straightPoints==0 && pendingStraightPoints>0) {
+                    score+=pendingStraightPoints;
+                    scoreFromCards+=pendingStraightPoints;
+                    pendingStraightPoints=0;
+                }
+                else if (straightPoints>0) {
+                    pendingStraightPoints=straightPoints;
+                }
+
+                starStraight.SetActive(pendingStraightPoints>0);
+                txtStraight.text=(pendingStraightPoints>0 ? "Straight ("+straightCount.ToString()+") - "+straightPoints.ToString()+" points" : "");
+            }
+
+        }
+
+        checkGameState();
+
+        updateUI();
+
     }
 
     void setCanvasStatus(string canvasTag, bool newState, bool hideOthers=true) {
@@ -666,6 +840,16 @@ public class GameManager : MonoBehaviour
             playerName=tempPlayerName;
             return true;
         }
+    }
+
+    public SuitedCard getRandomSuitedCard() {
+        CardSuit cardSuit = (CardSuit)Random.Range(0, 3);
+        int cardNumber = Random.Range(2,9);
+
+        SuitedCard returnCard = new SuitedCard();
+        returnCard.cardSuit=cardSuit;
+        returnCard.cardNumber=cardNumber;
+        return returnCard;
     }
 
 

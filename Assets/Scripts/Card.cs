@@ -37,9 +37,14 @@ public class Card
     public TextMeshProUGUI rightBonusUI;
     public GameObject leftBonusIMG;
     public GameObject rightBonusIMG;
+
+    public GameObject cardSuitIMG;
+    public TextMeshProUGUI cardSuitTXT;
+
+    public SuitedCard suitedCard;
     
 
-    public void init(GameManager newGameManager, CardSO newCardSO) {
+    public void init(GameManager newGameManager, CardSO newCardSO, SuitedCard newSuitedCard) {
         gameManager=newGameManager;
         cardSO=newCardSO;
         sprite=cardSO.sprite;
@@ -51,6 +56,7 @@ public class Card
         scoreModifier=cardSO.scoreModifier;
         resetBloodthirst=cardSO.resetBloodthirst;
         impassable=cardSO.impassable;
+        suitedCard=newSuitedCard;
     }
 
     public void instantiateOnMap(GameObject newCardObject, GameObject parentContainer, int newXCoord, int newYCoord, int newCardNumber) {
@@ -67,13 +73,6 @@ public class Card
         CardHandler cardHandler=cardObject.GetComponent<CardHandler>();
         cardHandler.init(this);
 
-        /*
-        public TextMeshProUGUI leftBonusUI;
-    public TextMeshProUGUI rightBonusUI;
-    public GameObject leftBonusIMG;
-    public GameObject rightBonusIMG;*/
-
-
         cardFrontImage = cardObject.transform.GetChild(0).GetChild(0).gameObject.GetComponent<Image>();
         cardImage = cardObject.transform.GetChild(0).GetChild(1).gameObject.GetComponent<Image>();
             cardImage.sprite=sprite;
@@ -83,9 +82,23 @@ public class Card
         leftBonusUI=cardObject.transform.GetChild(0).GetChild(4).gameObject.GetComponent<TextMeshProUGUI>();
         rightBonusIMG=cardObject.transform.GetChild(0).GetChild(5).gameObject;
         rightBonusUI=cardObject.transform.GetChild(0).GetChild(6).gameObject.GetComponent<TextMeshProUGUI>();
+
+        cardSuitIMG=cardObject.transform.GetChild(0).GetChild(7).gameObject;
+        cardSuitTXT=cardObject.transform.GetChild(0).GetChild(8).gameObject.GetComponent<TextMeshProUGUI>();
+
+        if (gameManager.complexMode) {
+            cardSuitIMG.GetComponent<Image>().sprite=gameManager.cardSuitSprites[(int)suitedCard.cardSuit];
+            cardSuitTXT.text=suitedCard.cardNumber.ToString();
+            cardSuitTXT.color=((int)suitedCard.cardSuit<2) ? Color.black : Color.red;
+        }
+        else {
+            cardSuitTXT.text="";
+            cardSuitIMG.SetActive(false);
+        }
+    
+
         
-        
-        cardOverlayObject = cardObject.transform.GetChild(0).GetChild(7).gameObject;
+        cardOverlayObject = cardObject.transform.GetChild(0).GetChild(9).gameObject;
         cardOverlayImage=cardOverlayObject.GetComponent<Image>();
 
         leftBonusUI.text="";

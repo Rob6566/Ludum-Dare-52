@@ -15,7 +15,7 @@ MonoBehaviour:
   cardName: Hapless Hiker
   textOnGrab: Before I was bitten, I was a vegetarian. Now, I'm a humanitarian.
   sprite: {fileID: 21300000, guid: 877d62436eb904c9a8f4178e4e8e520b, type: 3}
-  cardProbability: 10
+  cardProbability: 15
   sanityModifier: -2
   bloodModifier: 10
   scoreModifier: 0
