@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
@@ -13,13 +14,13 @@ public class GameManager : MonoBehaviour
         public GameObject playerSpeechBubble;
         public TextMeshProUGUI playerSpeechTxt;
     public int score=100;
-    public int sanity=10;
+    public int sanity=5;
     public int SANITY_MAX=10;
     public int blood=10;
     public int BLOOD_MAX=100;
     public float visibility_range=5f; //How far we can see
     public int bloodThirst=0;
-    public int BLOODTHIRST_RATE_MAX=5;
+    public int BLOODTHIRST_RATE_MAX=20;
 
     public List<CardSO> availableCards = new List<CardSO>();
 
@@ -56,11 +57,29 @@ public class GameManager : MonoBehaviour
     private Vector3 dragOrigin;
 
     //Handling movement of player
+    public bool gameOver=false;
     public bool lockActions=false;
     public bool playerMoving=false;
     private Vector3 oldPosition;
     private Vector3 newPosition;
     private Card cardAfterMovement;
+
+
+    //End game controls
+    public GameObject winLossOverlay;
+    public TextMeshProUGUI winLoseTitleTXT;
+    public TextMeshProUGUI winLoseConditionTXT;
+    public TextMeshProUGUI winLoseStatsTXT;
+    public TextMeshProUGUI winLoseScoreTXT;
+
+
+    private int statBloodHarvested=0;
+    private int statDistanceMoved=0;
+    private int statBloodSpentOnMovement=0;
+    private int statSanityGained=0;
+    private int scoreFromItems=0;
+    private int scoreLostFromMovement=0;
+
 
     //Camera handling
     private Vector3 cameraVelocity = Vector3.zero;
@@ -68,17 +87,23 @@ public class GameManager : MonoBehaviour
     Camera camera;
     public Camera UIcamera;
     [SerializeField] Vector3 cameraOffset;
+    bool manuallyOperatingCamera=false;
 
     //Camera smooth following
     private void LateUpdate() {
-        Vector3 targetPosition = playerObject.transform.position+cameraOffset;
-        camera.transform.position = Vector3.SmoothDamp(camera.transform.position, targetPosition, ref cameraVelocity, cameraSmoothTime);
+        if (!manuallyOperatingCamera) {
+            Vector3 targetPosition = playerObject.transform.position+cameraOffset;
+            camera.transform.position = Vector3.SmoothDamp(camera.transform.position, targetPosition, ref cameraVelocity, cameraSmoothTime);
+        }
     }
 
 
  
  
     void Update() {
+        if (gameOver) {
+            return;
+        }
 
         //Animate the player
         if (playerMoving) {
@@ -107,7 +132,7 @@ public class GameManager : MonoBehaviour
         
 
 
-
+/* //Attempt to Drag to move camera. Going to implement as WASD
         if (Input.GetMouseButtonDown(0))
         {
             dragOrigin = Input.mousePosition;
@@ -120,7 +145,7 @@ public class GameManager : MonoBehaviour
         Vector3 pos = Camera.main.ScreenToViewportPoint(Input.mousePosition - dragOrigin);
         Vector3 move = new Vector3(pos.x * dragSpeed, 0, pos.y * dragSpeed);
  
-        transform.Translate(move, Space.World);  
+        transform.Translate(move, Space.World);  */
     }
 
 
@@ -128,18 +153,31 @@ public class GameManager : MonoBehaviour
         camera=GameObject.FindWithTag("MainCamera").GetComponent<Camera>();   
         UIcamera.enabled=false;
         UIcamera.enabled=true;
+        winLossOverlay.SetActive(false);
         startGame();
     }
 
     void startGame() {
         score=100;
-        sanity=10;
+        sanity=5;
         SANITY_MAX=10;
         blood=10;
         BLOOD_MAX=100;
         visibility_range=1f;
+        statBloodHarvested=0;
+        statDistanceMoved=0;
+        statBloodSpentOnMovement=0;
+        statSanityGained=0;
+        scoreFromItems=0;
+        scoreLostFromMovement=0;
+        gameOver=false;
 
         generateMap();
+    }
+
+     //Restart the game
+    public void returnToSplash() {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     void generateMap() {
@@ -169,7 +207,40 @@ public class GameManager : MonoBehaviour
 
     //Checks whether the player has won or lost
     void checkGameState() {
+        bool lostDueToSanity=false;
+        bool won=false;
+        if (blood<0) {
+            gameOver=true;
+        }
+        else if (blood>=BLOOD_MAX) {
+            gameOver=true;
+            won=true;
+        }
+        else if (sanity<=0) {
+            gameOver=true;
+            lostDueToSanity=true;
+        }
 
+        if (gameOver) {
+            winLossOverlay.SetActive(true);
+            winLoseTitleTXT.text = "<b><color=#"+(won ?  "0C8C2F" : "9A0707")+">" + (won ? "You win!" : "You lose!")+"</color></b>";
+            if (won) {
+                winLoseConditionTXT.text="<b><color=#0C8C2F>You got to "+BLOOD_MAX.ToString()+" blood!</color></b>";   
+            }
+            else {
+                winLoseConditionTXT.text="<b><color=#9A0707>Your "+(lostDueToSanity ? "sanity" : "blood")+" dropped to 0.</color></b>";   
+            }
+
+            winLoseStatsTXT.text=
+            "Blood Harvested: "+statBloodHarvested.ToString()+
+            "<br>Distance Moved: "+statDistanceMoved.ToString()+
+            "<br>Blood spent on movement: "+statBloodSpentOnMovement.ToString()+
+            "<br>Sanity gained: "+statSanityGained.ToString()+
+            "<br>Score from events: "+scoreFromItems.ToString()+
+            "<br>Score lost from movement: "+scoreLostFromMovement.ToString();
+
+            winLoseScoreTXT.text="Score: "+score.ToString();
+        }
     }
 
     public void updateUI() {
@@ -227,7 +298,6 @@ public class GameManager : MonoBehaviour
 
     public Card getCardFromCoords(int xCoord, int yCoord) {
         int mapSize=((MAP_SIZE_FROM_START*2)+1);
-        Debug.Log("getCardFromCoords - "+(yCoord*mapSize+xCoord));
         return cardsOnMap[yCoord*mapSize+xCoord];
     }
 
@@ -237,6 +307,10 @@ public class GameManager : MonoBehaviour
         sanity=Mathf.Max(sanity, 0);
         checkGameState();
         updateUI();
+
+        if (modifier>0) {
+            statSanityGained+=modifier;
+        }
     }
 
     public void modifyBlood(int modifier) {
@@ -245,28 +319,40 @@ public class GameManager : MonoBehaviour
         blood=Mathf.Max(blood, 0);
         checkGameState();
         updateUI();
+
+        statBloodHarvested+=modifier;
     }
 
-    public void modifyScore(int modifier) {
+    public void modifyScore(int modifier, bool fromItem=true) {
         score+=modifier;
         checkGameState();
         updateUI();
+
+        if (fromItem && modifier>0) {
+            scoreFromItems+=modifier;
+        }
     }
 
     public void movePlayer(Card cardToMoveTo) {
 
         //Blood movement cost
-        int bloodCost = Mathf.Max(cardToMoveTo.distanceFromPlayer(playerXPosition, playerYPosition)-1, 0);
+        int distanceMoved=cardToMoveTo.distanceFromPlayer(playerXPosition, playerYPosition);
+        statDistanceMoved+=distanceMoved;
+        int bloodCost = Mathf.Max(distanceMoved-1, 0);
         bloodCost+=bloodThirst;
         blood-=bloodCost;
 
+        statBloodSpentOnMovement+=bloodCost;
+
         //Modify bloodthirst
         if(cardToMoveTo.resetBloodthirst) {
-            bloodThirst=0;
+            bloodThirst=1;
         }
         else {
             bloodThirst=Mathf.Min(bloodThirst+1, BLOODTHIRST_RATE_MAX);
         }
+
+        checkGameState();
 
         updateUI();
 
@@ -278,6 +364,7 @@ public class GameManager : MonoBehaviour
         
         lockActions=true;
         playerMoving=true;
+        manuallyOperatingCamera=false;
         playerSpeechBubble.SetActive(false);
         playerSpeechTxt.text="";
     }

@@ -180,7 +180,7 @@ public class Card
 
 
     public void onGrab() {
-        if (gameManager.lockActions) {
+        if (gameManager.lockActions || gameManager.gameOver) {
             return;
         }
     
@@ -192,7 +192,7 @@ public class Card
     }
 
     public void onPointerEnter() {
-        if (isTraversible()) {
+        if (isTraversible() && !gameManager.gameOver) {
             cardObject.transform.localScale=gameManager.SELECTED_SCALE;
         }
     }
