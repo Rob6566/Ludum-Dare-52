@@ -35,6 +35,25 @@ public class HighScoreData
 
 public class GameManager : MonoBehaviour
 {
+    //AUDIO
+    public AudioManager audioManager;
+    public int MUSIC_INTRO=0;
+    public int MUSIC_DEFEAT=1;
+    public int MUSIC_GAMEPLAY_MUSIC=2;
+    public int MUSIC_WIN=3;
+    public int MUSIC_GAMEPLAY_AMBIENCE=4;
+    public int MUSIC_DEATH=5;
+    public int MUSIC_POSTDEATH=6;
+    
+    public int SOUND_SANITY=0;
+    public int SOUND_FIGHT_1=1;
+    public int SOUND_FIGHT_2=2;
+    public int SOUND_FIGHT_3=3;
+    public int SOUND_FIGHT_4=4;
+    public int SOUND_SCORE=5;
+    public int SOUND_POKER=6;
+
+    
     public GameObject cardPrefab;
     public GameObject cardContainer;
     public GameObject playerObject;
@@ -85,7 +104,7 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI scoreObjectiveTXT;
     
 
-    public float dragSpeed = 500000;
+    public float dragSpeed = 50;
     private Vector3 dragOrigin;
 
     //Handling movement of player
@@ -144,7 +163,7 @@ public class GameManager : MonoBehaviour
 
     //High Scores
     public const string SERVER_URL ="https://ldjam51.rob6566.click/LudumDare-server/";
-    public const string SCORES_URL="scores.php?game_id=ludum52";
+    public const string SCORES_URL="scores.php?game_id=ludum52-postjam";
     public const string ADD_SCORE_URL="add_score.php";
     public GameObject scorePrefab;
     public GameObject scoreHolder;
@@ -158,7 +177,7 @@ public class GameManager : MonoBehaviour
 
 
     //Since cards aren't fully featured, we allow users to turn them off 
-    public bool complexMode = false;
+    public bool complexMode = true;
 
     //Card Suits
     public List<Sprite> cardSuitSprites = new List<Sprite>();
@@ -178,8 +197,12 @@ public class GameManager : MonoBehaviour
     private List<int> straightScores=new List<int>{0,0,0,10,20,40,80,160,320};
     private List<int> setScores=new List<int>{0,0,5,10,20,40,80,160,320};
 
-    public Toggle complexModeToggle;
+    //public Toggle complexModeToggle;
     public GameObject complexModeUIContainer;
+
+    //Fading animations
+    public GameObject textAnimationPrefab;
+    public int recentSanityGain=0;
 
 
 
@@ -201,6 +224,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+
         //Animate the player
         if (playerMoving) {
             timeSinceLastAction+=Time.deltaTime;
@@ -217,6 +241,16 @@ public class GameManager : MonoBehaviour
                 CalculateVisibleTiles();
 
                 updateUI();
+
+                if (recentSanityGain!=0) {
+                    GameObject textPopup = UnityEngine.Object.Instantiate(textAnimationPrefab);   
+                    textPopup.transform.SetParent(cardContainer.transform);
+                    
+                    FadingAnimationHandler textHandler = textPopup.GetComponent<FadingAnimationHandler>();
+                    textHandler.init(4f, playerObject.transform.position,  recentSanityGain.ToString()+" sanity"); 
+                    recentSanityGain=0;
+                }
+                
                 
                 //Speech bubble
                 if (cardAfterMovement.textOnGrab!="") {
@@ -249,6 +283,35 @@ public class GameManager : MonoBehaviour
                 manuallyOperatingCamera=true;
                 camera.transform.position=camera.transform.position+(cameraDirection*Time.deltaTime*CAMERA_MANUAL_MOVE_SPEED);
             }
+
+
+            //Mouse scroll to zoom camera
+            if (Input.GetAxis("Mouse ScrollWheel")!=0) {
+                float minFov = 30f;
+                float maxFov = 90f;
+                float sensitivity = -10f;
+                
+                float fov = camera.fieldOfView;
+                fov += Input.GetAxis("Mouse ScrollWheel") * sensitivity;
+                fov = Mathf.Clamp(fov, minFov, maxFov);
+                camera.fieldOfView = fov;
+                Debug.Log("Mouse ScrollWheel = "+Input.GetAxis("Mouse ScrollWheel"));
+                manuallyOperatingCamera=true;
+            }
+
+            //Mouse drag to move camera
+            if (Input.GetMouseButtonDown(1)) {
+                dragOrigin = Input.mousePosition;
+                return;
+            }
+    
+            if (!Input.GetMouseButton(1)) return;
+            Vector3 pos = camera.ScreenToViewportPoint(Input.mousePosition - dragOrigin);
+            Vector3 move = new Vector3(pos.x * -dragSpeed, pos.y * -dragSpeed, 0);
+    
+            camera.transform.Translate(move, Space.World);  
+            manuallyOperatingCamera=true;
+            
         }
     }
 
@@ -262,6 +325,11 @@ public class GameManager : MonoBehaviour
         invalidName.SetActive(false);
 
         setCanvasStatus("SplashCanvas", true);
+
+        GameObject audioContainer = GameObject.FindWithTag("AudioManager");
+        audioManager = audioContainer.GetComponentInChildren<AudioManager>();
+
+        audioManager.fadeInMusic(MUSIC_INTRO, 0, 1f);
 
         StartCoroutine(LoadScores());
     }
@@ -330,10 +398,12 @@ public class GameManager : MonoBehaviour
                 introText.text="One day, after a big harvest, you partake in some of your mushrooms.<br><br>Arriving home befuddled, you forget to hang up your garlic ward.";
             }
             else if (introStep==2) {
+                audioManager.fadeInMusic(MUSIC_DEATH, 1, 1f);
                 introText.text="In your slumber, you're bitten by a vampire!<br><br>Your eyes glaze with bloodlust, your fangs lengthen, your skin starts to sparkle (??).";
                 camera.backgroundColor=Color.red;
             }
             else if (introStep==3) {
+                audioManager.fadeInMusic(MUSIC_POSTDEATH, 2, 1f);
                 introText.text="<color=#ffffff>You know you cannot rest until you've harvested enough blood to quench your burning thirst.</color>";
                 camera.backgroundColor=Color.black;
             }
@@ -369,7 +439,9 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        complexMode=complexModeToggle.isOn;
+        audioManager.fadeInMusic(MUSIC_GAMEPLAY_MUSIC, 4, 1f);
+
+        complexMode=true;//complexModeToggle.isOn;
         if (!complexMode) {
             cardFrontWithEffects=cardFrontWithEffectsBasic;
             cardFrontNoEffects=cardFrontNoEffectsBasic;
@@ -399,6 +471,9 @@ public class GameManager : MonoBehaviour
         camera.backgroundColor=Color.black;
 
         bloodCostOverlay.SetActive(false);
+
+        playerSpeechBubble.SetActive(false);
+        playerSpeechTxt.text="";
 
         List<SuitedCard> recentCards = new List<SuitedCard>();
 
@@ -467,7 +542,10 @@ public class GameManager : MonoBehaviour
         }
 
         if (gameOver) {
+            calculateCardCombos(true); //Cash out any card combos
+            updateUI();
             winLossOverlay.SetActive(true);
+            audioManager.fadeInMusic(won ? MUSIC_WIN  : MUSIC_DEFEAT, 1, 1f);
             winLoseTitleTXT.text = "<b><color=#"+(won ?  "0C8C2F" : "9A0707")+">" + (won ? "You win!" : "You lose!")+"</color></b>";
             if (won) {
                 winLoseConditionTXT.text="<b><color=#0C8C2F>You got to "+BLOOD_MAX.ToString()+" blood!</color></b>";   
@@ -503,6 +581,7 @@ public class GameManager : MonoBehaviour
             if (thisCard.getDistanceFromCoords(playerXPosition, playerYPosition)<=visibility_range) {
                 thisCard.setVisible();
             }
+            thisCard.setLoseOverlay();
         }
     }
 
@@ -559,6 +638,8 @@ public class GameManager : MonoBehaviour
         if (modifier>0) {
             statSanityGained+=modifier;
         }
+
+        recentSanityGain=modifier;
     }
 
     public void modifyBlood(int modifier) {
@@ -581,19 +662,34 @@ public class GameManager : MonoBehaviour
         }
     }
 
+
+    public int getMoveCost(Card cardToMoveTo, bool updateStat=false, bool showMoveCostOverlay=false) {
+        int distanceMoved=cardToMoveTo.distanceFromPlayer(playerXPosition, playerYPosition);
+        if (updateStat) {
+            statDistanceMoved+=distanceMoved;
+        }
+        
+        int bloodCost = Mathf.Max((distanceMoved-1)*(distanceMoved-1), 0);
+        int distanceCost=bloodCost;
+        bloodCost+=bloodThirst;
+
+        if (showMoveCostOverlay) {
+            bloodCostTXT.text="Blood cost - "+bloodCost.ToString()+" ("+distanceCost.ToString()+" Distance, "+bloodThirst.ToString()+" Bloodthirst)";
+        }
+
+        return bloodCost;
+    }
+
     public void movePlayer(Card cardToMoveTo) {
 
         //Blood movement cost
-        int distanceMoved=cardToMoveTo.distanceFromPlayer(playerXPosition, playerYPosition);
-        statDistanceMoved+=distanceMoved;
-        int bloodCost = Mathf.Max(distanceMoved-1, 0);
-        bloodCost+=bloodThirst;
+        int bloodCost=getMoveCost(cardToMoveTo, true, false);
         blood-=bloodCost;
 
         statBloodSpentOnMovement+=bloodCost;
         statMoves++;
 
-        int scoreToLose=((int)statMoves / 35) + 1;
+        int scoreToLose=((int)statMoves / 10) + 1;
         scoreLostFromMovement+=scoreToLose;
         score-=scoreToLose;
 
@@ -645,7 +741,17 @@ public class GameManager : MonoBehaviour
 
             
             
-            //Calculate flushes
+            calculateCardCombos(false);
+
+        }
+
+        updateUI();
+
+        checkGameState();
+    }
+
+    void calculateCardCombos(bool cashOut=false) {
+        //Calculate flushes
             CardSuit currentSuit=recentCards[0].cardSuit;
             int flushCount=0;
             foreach(SuitedCard thisCard in recentCards) {
@@ -658,7 +764,7 @@ public class GameManager : MonoBehaviour
             }
 
             int flushPoints=flushScores[flushCount];
-            if (flushPoints==0 && pendingFlushPoints>0) {
+            if ((flushPoints==0 || cashOut) && pendingFlushPoints>0) {
                 score+=pendingFlushPoints;
                 scoreFromCards+=pendingFlushPoints;
                 pendingFlushPoints=0;
@@ -686,7 +792,7 @@ public class GameManager : MonoBehaviour
             }
 
             int setPoints=setScores[setCount];
-            if (setPoints==0 && pendingSetPoints>0) {
+            if ((setPoints==0 || cashOut) && pendingSetPoints>0) {
                 score+=pendingSetPoints;
                 scoreFromCards+=pendingSetPoints;
                 pendingSetPoints=0;
@@ -720,7 +826,7 @@ public class GameManager : MonoBehaviour
                 
 
                 int straightPoints=straightScores[straightCount];
-                if (straightPoints==0 && pendingStraightPoints>0) {
+                if ((straightPoints==0 || cashOut) && pendingStraightPoints>0) {
                     score+=pendingStraightPoints;
                     scoreFromCards+=pendingStraightPoints;
                     pendingStraightPoints=0;
@@ -732,12 +838,6 @@ public class GameManager : MonoBehaviour
                 starStraight.SetActive(pendingStraightPoints>0);
                 txtStraight.text=(pendingStraightPoints>0 ? "Straight ("+straightCount.ToString()+") - "+straightPoints.ToString()+" points" : "");
             }
-
-        }
-
-        checkGameState();
-
-        updateUI();
 
     }
 
@@ -759,7 +859,7 @@ public class GameManager : MonoBehaviour
         WWWForm form = new WWWForm();
         form.AddField("user_name", playerName);
         form.AddField("score", score);
-        form.AddField("game_id", "ludum52");
+        form.AddField("game_id", "ludum52-postjam");
 
         using (UnityWebRequest webRequest = UnityWebRequest.Post(SERVER_URL+ADD_SCORE_URL, form)) {
             // Request and wait for the desired page.

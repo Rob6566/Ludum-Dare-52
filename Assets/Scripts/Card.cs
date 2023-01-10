@@ -41,6 +41,8 @@ public class Card
     public GameObject cardSuitIMG;
     public TextMeshProUGUI cardSuitTXT;
 
+    public GameObject loseIndicator;
+
     public SuitedCard suitedCard;
     
 
@@ -73,18 +75,23 @@ public class Card
         CardHandler cardHandler=cardObject.GetComponent<CardHandler>();
         cardHandler.init(this);
 
-        cardFrontImage = cardObject.transform.GetChild(0).GetChild(0).gameObject.GetComponent<Image>();
-        cardImage = cardObject.transform.GetChild(0).GetChild(1).gameObject.GetComponent<Image>();
+        loseIndicator = cardObject.transform.GetChild(0).GetChild(0).gameObject;
+        cardFrontImage = cardObject.transform.GetChild(0).GetChild(1).gameObject.GetComponent<Image>();
+        loseIndicator.SetActive(false);
+        cardImage = cardObject.transform.GetChild(0).GetChild(2).gameObject.GetComponent<Image>();
             cardImage.sprite=sprite;
-        cardNameUI = cardObject.transform.GetChild(0).GetChild(2).gameObject.GetComponent<TextMeshProUGUI>();
+        cardNameUI = cardObject.transform.GetChild(0).GetChild(3).gameObject.GetComponent<TextMeshProUGUI>();
             cardNameUI.text=cardName;
-        leftBonusIMG=cardObject.transform.GetChild(0).GetChild(3).gameObject;
-        leftBonusUI=cardObject.transform.GetChild(0).GetChild(4).gameObject.GetComponent<TextMeshProUGUI>();
-        rightBonusIMG=cardObject.transform.GetChild(0).GetChild(5).gameObject;
-        rightBonusUI=cardObject.transform.GetChild(0).GetChild(6).gameObject.GetComponent<TextMeshProUGUI>();
+        leftBonusIMG=cardObject.transform.GetChild(0).GetChild(4).gameObject;
+        leftBonusUI=cardObject.transform.GetChild(0).GetChild(5).gameObject.GetComponent<TextMeshProUGUI>();
+        rightBonusIMG=cardObject.transform.GetChild(0).GetChild(6).gameObject;
+        rightBonusUI=cardObject.transform.GetChild(0).GetChild(7).gameObject.GetComponent<TextMeshProUGUI>();
 
-        cardSuitIMG=cardObject.transform.GetChild(0).GetChild(7).gameObject;
-        cardSuitTXT=cardObject.transform.GetChild(0).GetChild(8).gameObject.GetComponent<TextMeshProUGUI>();
+        cardSuitIMG=cardObject.transform.GetChild(0).GetChild(8).gameObject;
+        cardSuitTXT=cardObject.transform.GetChild(0).GetChild(9).gameObject.GetComponent<TextMeshProUGUI>();
+        
+        cardOverlayObject = cardObject.transform.GetChild(0).GetChild(10).gameObject;
+        cardOverlayImage=cardOverlayObject.GetComponent<Image>();
 
         if (gameManager.complexMode) {
             cardSuitIMG.GetComponent<Image>().sprite=gameManager.cardSuitSprites[(int)suitedCard.cardSuit];
@@ -95,11 +102,7 @@ public class Card
             cardSuitTXT.text="";
             cardSuitIMG.SetActive(false);
         }
-    
 
-        
-        cardOverlayObject = cardObject.transform.GetChild(0).GetChild(9).gameObject;
-        cardOverlayImage=cardOverlayObject.GetComponent<Image>();
 
         leftBonusUI.text="";
         rightBonusUI.text="";
@@ -134,6 +137,17 @@ public class Card
         if (!this.visible) {
             this.visible=true;
             updateUI();
+        }
+    }
+
+    public void setLoseOverlay() {
+        if (this.visible  && !this.visited) {
+            int bloodCost=gameManager.getMoveCost(this);
+            bloodCost-=this.bloodModifier;
+            loseIndicator.SetActive(false);
+            if (bloodCost>=gameManager.blood || gameManager.sanity+sanityModifier<=0) {
+                loseIndicator.SetActive(true);
+            }
         }
     }
 
@@ -198,10 +212,26 @@ public class Card
         }
     
         this.customOnGrab();
+
         gameManager.modifySanity(sanityModifier);
         gameManager.modifyBlood(bloodModifier);
         gameManager.modifyScore(scoreModifier);
         gameManager.movePlayer(this);
+
+        if (gameManager.gameOver) {
+            return;
+        }
+
+        if (sanityModifier>0) {
+            gameManager.audioManager.playSound(gameManager.SOUND_SANITY, 1f);
+        }
+        else if (bloodModifier>0) {
+            int attackSoundToPlay = Random.Range(0, 2);
+            gameManager.audioManager.playSound(attackSoundToPlay==0 ? gameManager.SOUND_FIGHT_2 : attackSoundToPlay==1 ? gameManager.SOUND_FIGHT_3 : gameManager.SOUND_FIGHT_4, 1f);
+        }
+        else if (scoreModifier>0) {
+            gameManager.audioManager.playSound(gameManager.SOUND_SCORE, 1f);
+        }
     }
 
     public void onPointerEnter() {
@@ -213,10 +243,7 @@ public class Card
             gameManager.bloodCostOverlay.transform.localScale= gameManager.BOARD_SCALE;
             gameManager.bloodCostOverlay.transform.SetParent(gameManager.cardContainer.transform);
             gameManager.bloodCostOverlay.transform.SetAsLastSibling();
-            int bloodCost=gameManager.bloodThirst;
-            int distanceCost=distanceFromPlayer(gameManager.playerXPosition, gameManager.playerYPosition)-1;
-            bloodCost+=distanceCost;
-            gameManager.bloodCostTXT.text="Blood cost - "+bloodCost.ToString()+" ("+distanceCost.ToString()+" Distance, "+gameManager.bloodThirst.ToString()+" Bloodthirst)";
+            gameManager.getMoveCost(this, false, true);
         }
     }
 

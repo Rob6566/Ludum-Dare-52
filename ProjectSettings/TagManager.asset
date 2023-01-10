@@ -8,6 +8,7 @@ TagManager:
   - GameCanvas
   - ControlPanelCanvas
   - IntroCanvas
+  - AudioManager
   layers:
   - Default
   - TransparentFX
