@@ -67,6 +67,7 @@ public class GameManager : MonoBehaviour
     public float visibility_range=5f; //How far we can see
     public int bloodThirst=0;
     public int BLOODTHIRST_RATE_MAX=20;
+    int SCORE_WIN_BONUS=100;
 
     public List<CardSO> availableCards = new List<CardSO>();
 
@@ -195,9 +196,9 @@ public class GameManager : MonoBehaviour
     private int pendingFlushPoints;
     private int pendingStraightPoints;
     private int pendingSetPoints;
-    private List<int> flushScores=new List<int>{0,0,0,5,10,20,40,80,160};
-    private List<int> straightScores=new List<int>{0,0,0,10,20,40,80,160,320};
-    private List<int> setScores=new List<int>{0,0,5,10,20,40,80,160,320};
+    private List<int> flushScores=new List<int>{0,0,0,40,50,60,70,85,110};
+    private List<int> straightScores=new List<int>{0,0,0,45,55,70,85,105,125};
+    private List<int> setScores=new List<int>{0,0,30,60,100,170,290,480,750};
 
     //public Toggle complexModeToggle;
     public GameObject complexModeUIContainer;
@@ -538,6 +539,7 @@ public class GameManager : MonoBehaviour
         else if (blood>=BLOOD_MAX) {
             gameOver=true;
             won=true;
+            score+=WIN_BONUS;
         }
         else if (sanity<=0) {
             gameOver=true;
