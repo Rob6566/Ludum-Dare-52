@@ -91,6 +91,8 @@ public class GameManager : MonoBehaviour
     public Sprite cardFrontWithEffects;
     public Sprite cardFrontNoEffectsBasic;
     public Sprite cardFrontWithEffectsBasic;
+    public Sprite cardFrontWithEffectsTerminal;
+    public Sprite cardFrontNoEffectsTerminal;
 
     public Sprite bloodIcon;
     public Sprite sanityIcon;
@@ -408,7 +410,7 @@ public class GameManager : MonoBehaviour
                 camera.backgroundColor=Color.black;
             }
             else if (introStep==4) {
-                introText.text="<color=#ffffff>Click tiles to move. WASD overrides the camera.<br><br>Get to 100 Blood.<br><br>Keep Sanity and Blood above 0.</color>";
+                introText.text="<color=#ffffff>Click tiles to move. Override the camera with WASD, mouse wheel and right-click-drag.<br><br>Get to 100 Blood.<br><br>Keep Sanity and Blood above 0.</color>";
                 camera.backgroundColor=Color.black;
                 introButton.transform.GetChild(0).gameObject.GetComponent<TextMeshProUGUI>().text="Start";
             }
@@ -442,6 +444,7 @@ public class GameManager : MonoBehaviour
         audioManager.fadeInMusic(MUSIC_GAMEPLAY_MUSIC, 4, 1f);
 
         complexMode=true;//complexModeToggle.isOn;
+        scoreObjectiveTXT.text="Increase score by winning in less moves, picking up scoring items and chaining sets/flushes/straights";
         if (!complexMode) {
             cardFrontWithEffects=cardFrontWithEffectsBasic;
             cardFrontNoEffects=cardFrontNoEffectsBasic;
@@ -529,7 +532,7 @@ public class GameManager : MonoBehaviour
         
         bool lostDueToSanity=false;
         bool won=false;
-        if (blood<0) {
+        if (blood<=0) {
             gameOver=true;
         }
         else if (blood>=BLOOD_MAX) {

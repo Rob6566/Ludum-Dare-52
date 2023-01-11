@@ -146,7 +146,21 @@ public class Card
             bloodCost-=this.bloodModifier;
             loseIndicator.SetActive(false);
             if (bloodCost>=gameManager.blood || gameManager.sanity+sanityModifier<=0) {
-                loseIndicator.SetActive(true);
+                //loseIndicator.SetActive(true);
+                if (sanityModifier!=0 || bloodModifier!=0 || scoreModifier!=0) {
+                    cardFrontImage.sprite=gameManager.cardFrontWithEffectsTerminal;
+                }
+                else {
+                    cardFrontImage.sprite=gameManager.cardFrontNoEffectsTerminal;
+                }
+            }
+            else {
+                if (sanityModifier!=0 || bloodModifier!=0 || scoreModifier!=0) {
+                    cardFrontImage.sprite=gameManager.cardFrontWithEffects;
+                }
+                else {
+                    cardFrontImage.sprite=gameManager.cardFrontNoEffects;
+                }
             }
         }
     }

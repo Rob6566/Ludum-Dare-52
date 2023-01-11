@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class FadingAnimationHandler : MonoBehaviour
@@ -30,6 +31,7 @@ public class FadingAnimationHandler : MonoBehaviour
 
         //Hover in starting position for half our time
         if (timeSpent<(travelTime/2)) {
+            gameObject.transform.GetChild(0).gameObject.GetComponent<TextMeshProUGUI>().color=new Color32(0,0,0,255);
             return;
         }
 
@@ -37,7 +39,9 @@ public class FadingAnimationHandler : MonoBehaviour
         float reducedTimeSpent=timeSpent-(travelTime/2);
 
         gameObject.transform.position=origin+((destination-origin)*(reducedTimeSpent/reducedTravelTime));
-        gameObject.GetComponent<TextMeshProUGUI>().color=new Color32(0,0,0,(byte)Mathf.Floor(255-(255*(reducedTimeSpent/reducedTravelTime))));
+        gameObject.transform.GetChild(0).gameObject.GetComponent<TextMeshProUGUI>().color=new Color32(0,0,0,(byte)Mathf.Floor(255-(255*(reducedTimeSpent/reducedTravelTime))));
+        gameObject.GetComponent<Image>().color=new Color32(255,255,255,(byte)Mathf.Floor(255-(255*(reducedTimeSpent/reducedTravelTime))));
+        gameObject.transform.GetChild(1).gameObject.GetComponent<Image>().color=new Color32(255,255,255,(byte)Mathf.Floor(255-(255*(reducedTimeSpent/reducedTravelTime))));
 
         if (timeSpent>=travelTime) {
             Destroy(gameObject);

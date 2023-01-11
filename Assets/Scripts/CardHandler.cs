@@ -12,7 +12,7 @@ public class CardHandler : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
      }
 
     public void OnPointerClick(PointerEventData eventData) {  
-        if (!attachedCard.isTraversible()) {
+        if (!attachedCard.isTraversible() || eventData.button == PointerEventData.InputButton.Right) {
             return;
         }
 
