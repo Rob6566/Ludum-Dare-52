@@ -52,10 +52,13 @@ public class GameManager : MonoBehaviour
     public int SOUND_FIGHT_4=4;
     public int SOUND_SCORE=5;
     public int SOUND_POKER=6;
+    public int SOUND_DEFEAT=7;
+    public int SOUND_WIN=8;
 
     
     public GameObject cardPrefab;
     public GameObject cardContainer;
+    public GameObject playerContainer;
     public GameObject playerObject;
         public GameObject playerSpeechBubble;
         public TextMeshProUGUI playerSpeechTxt;
@@ -135,6 +138,9 @@ public class GameManager : MonoBehaviour
     private int scoreFromCards=0;
     private int scoreFromItems=0;
     private int scoreLostFromMovement=0;
+    private int scoreFromFlushes=0;
+    private int scoreFromStraights=0;
+    private int scoreFromSets=0;
 
 
     //Intro screen controls
@@ -196,8 +202,10 @@ public class GameManager : MonoBehaviour
     private int pendingFlushPoints;
     private int pendingStraightPoints;
     private int pendingSetPoints;
-    private List<int> flushScores=new List<int>{0,0,0,40,50,60,70,85,110};
-    private List<int> straightScores=new List<int>{0,0,0,45,55,70,85,105,125};
+    //private List<int> flushScores=new List<int>{0,0,0,5,10,20,40,80,160}; (original scores)
+    //private List<int> setScores=new List<int>{0,0,5,10,20,40,80,160,320};
+    private List<int> flushScores=new List<int>{0,0,0,20,35,50,75,90,110};
+    private List<int> straightScores=new List<int>{0,0,0,20,40,55,75,100,125};
     private List<int> setScores=new List<int>{0,0,30,60,100,170,290,480,750};
 
     //public Toggle complexModeToggle;
@@ -205,7 +213,20 @@ public class GameManager : MonoBehaviour
 
     //Fading animations
     public GameObject textAnimationPrefab;
+    float textAnimationDuration=3f;
     public int recentSanityGain=0;
+    public int recentBloodGain=0;
+    public int recentScoreGain=0;
+    public int recentFlushScore=0;
+    public int recentStraightScore=0;
+    public int recentSetScore=0;
+
+    //Text on grab card
+    List<string> grabTextShown = new List<string>();
+
+
+    //Menu
+    public GameObject menuContainer;
 
 
 
@@ -245,20 +266,23 @@ public class GameManager : MonoBehaviour
 
                 updateUI();
 
-                if (recentSanityGain!=0) {
-                    GameObject textPopup = UnityEngine.Object.Instantiate(textAnimationPrefab);   
-                    textPopup.transform.SetParent(cardContainer.transform);
-                    
-                    FadingAnimationHandler textHandler = textPopup.GetComponent<FadingAnimationHandler>();
-                    textHandler.init(4f, playerObject.transform.position,  recentSanityGain.ToString()+" sanity"); 
-                    recentSanityGain=0;
-                }
+                animateFadingBonuses();
                 
                 
                 //Speech bubble
                 if (cardAfterMovement.textOnGrab!="") {
-                    playerSpeechBubble.SetActive(true);
-                    playerSpeechTxt.text=cardAfterMovement.textOnGrab;
+                    bool showTextOnGrab=true;
+                    foreach(string thisText in grabTextShown) {
+                        if (thisText==cardAfterMovement.textOnGrab) {
+                            showTextOnGrab=false;
+                        }
+                    }
+
+                    if (showTextOnGrab) {
+                        playerSpeechBubble.SetActive(true);
+                        playerSpeechTxt.text=cardAfterMovement.textOnGrab;
+                        grabTextShown.Add(cardAfterMovement.textOnGrab);    
+                    }
                 }
             }
         }
@@ -341,6 +365,72 @@ public class GameManager : MonoBehaviour
         currentPosition.y=Mathf.Min(20f,currentPosition.y);
         camera.transform.position=currentPosition;
     }
+
+    public void animateFadingBonuses() {
+        int numberOfOtherTexts=0;
+        if (recentSanityGain!=0) {
+            GameObject textPopup = UnityEngine.Object.Instantiate(textAnimationPrefab);   
+            textPopup.transform.SetParent(cardContainer.transform);
+            
+            FadingAnimationHandler textHandler = textPopup.GetComponent<FadingAnimationHandler>();
+            textHandler.init(textAnimationDuration, playerObject.transform.position,  recentSanityGain.ToString()+" sanity", sanityIcon, numberOfOtherTexts, 1f); 
+            recentSanityGain=0;
+            numberOfOtherTexts++;
+        }
+
+        if (recentScoreGain!=0) {
+            GameObject textPopup = UnityEngine.Object.Instantiate(textAnimationPrefab);   
+            textPopup.transform.SetParent(cardContainer.transform);
+            
+            FadingAnimationHandler textHandler = textPopup.GetComponent<FadingAnimationHandler>();
+            textHandler.init(textAnimationDuration, playerObject.transform.position,  recentScoreGain.ToString()+" points", scoreIcon, numberOfOtherTexts, 1f); 
+            recentScoreGain=0;
+            numberOfOtherTexts++;
+        }
+
+         if (recentBloodGain!=0) {
+            GameObject textPopup = UnityEngine.Object.Instantiate(textAnimationPrefab);   
+            textPopup.transform.SetParent(cardContainer.transform);
+            
+            FadingAnimationHandler textHandler = textPopup.GetComponent<FadingAnimationHandler>();
+            textHandler.init(textAnimationDuration, playerObject.transform.position,  recentBloodGain.ToString()+" blood", bloodIcon, numberOfOtherTexts, 1f); 
+            recentBloodGain=0;
+            numberOfOtherTexts++;
+        }
+
+        if (recentFlushScore!=0) {
+            GameObject textPopup = UnityEngine.Object.Instantiate(textAnimationPrefab);   
+            textPopup.transform.SetParent(cardContainer.transform);
+            
+            FadingAnimationHandler textHandler = textPopup.GetComponent<FadingAnimationHandler>();
+            textHandler.init(textAnimationDuration, playerObject.transform.position,  recentFlushScore.ToString()+" points (Flush)", scoreIcon, numberOfOtherTexts, .8f); 
+            recentFlushScore=0;
+            numberOfOtherTexts++;
+        }
+
+        if (recentStraightScore!=0) {
+            GameObject textPopup = UnityEngine.Object.Instantiate(textAnimationPrefab);   
+            textPopup.transform.SetParent(cardContainer.transform);
+            
+            FadingAnimationHandler textHandler = textPopup.GetComponent<FadingAnimationHandler>();
+            textHandler.init(textAnimationDuration, playerObject.transform.position,  recentStraightScore.ToString()+" points (Straight)", scoreIcon, numberOfOtherTexts, .8f); 
+            recentStraightScore=0;
+            numberOfOtherTexts++;
+        }
+
+        if (recentSetScore!=0) {
+            GameObject textPopup = UnityEngine.Object.Instantiate(textAnimationPrefab);   
+            textPopup.transform.SetParent(cardContainer.transform);
+            
+            FadingAnimationHandler textHandler = textPopup.GetComponent<FadingAnimationHandler>();
+            textHandler.init(textAnimationDuration, playerObject.transform.position,  recentSetScore.ToString()+" points (Set)", scoreIcon, numberOfOtherTexts, .8f); 
+            recentSetScore=0;
+            numberOfOtherTexts++;
+        }
+    }
+
+
+
 
     //Auto-runs when game starts
     void Start() {
@@ -466,9 +556,12 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        menuContainer.SetActive(false);
+
+        //audioManager.setMusicVolume();
         audioManager.fadeInMusic(MUSIC_GAMEPLAY_MUSIC, 4, 1f);
 
-        complexMode=true;//complexModeToggle.isOn;
+        complexMode=true; //We previously feature flagged suited cards behind "complex mode"
         scoreObjectiveTXT.text="Increase score by winning in less moves, picking up scoring items and chaining sets/flushes/straights";
         if (!complexMode) {
             cardFrontWithEffects=cardFrontWithEffectsBasic;
@@ -477,12 +570,15 @@ public class GameManager : MonoBehaviour
         }
         complexModeUIContainer.SetActive(complexMode);
 
+        cardsOnMap = new List<Card>();
+
 
         score=100;
         sanity=5;
         SANITY_MAX=10;
         blood=10;
         BLOOD_MAX=100;
+        bloodThirst=0;
         visibility_range=1f;
         statBloodHarvested=0;
         statDistanceMoved=0;
@@ -491,14 +587,20 @@ public class GameManager : MonoBehaviour
         statMoves=0;
         scoreFromItems=0;
         scoreLostFromMovement=0;
+        scoreFromFlushes=0;
+        scoreFromStraights=0;
+        scoreFromSets=0;
         gameOver=false;
+        lockActions=false;
         runningIntro=false;
         introFading=false;
         manuallyOperatingCamera=false;
+        playerMoving=false;
         
         camera.backgroundColor=Color.black;
 
         bloodCostOverlay.SetActive(false);
+        winLossOverlay.SetActive(false);
 
         playerSpeechBubble.SetActive(false);
         playerSpeechTxt.text="";
@@ -515,7 +617,21 @@ public class GameManager : MonoBehaviour
         txtStraight.text="";
         txtSet.text="";
 
+        //Destroy any recent cards
+        foreach (Transform thisTransform in cardSuitContainer.transform) {
+            GameObject.Destroy(thisTransform.gameObject);
+        }
+
+        //Destroy map if it already exists
+        foreach (Transform thisTransform in cardContainer.transform) {
+            GameObject.Destroy(thisTransform.gameObject);
+        }
+
+
+        playerXPosition=MAP_SIZE_FROM_START;
+        playerYPosition=MAP_SIZE_FROM_START;
         generateMap();
+        
     }
 
      //Restart the game
@@ -529,6 +645,7 @@ public class GameManager : MonoBehaviour
         int yMin=xMin;
         int yMax=xMax;
         int cardUpto=0;
+
         for(int y=yMin; y<=yMax; y++) {
             for(int x=xMin; x<=xMax; x++) {
                 CardSO cardSO=getRandomCard(Mathf.Abs((MAP_SIZE_FROM_START+1)-x)+Mathf.Abs((MAP_SIZE_FROM_START+1)-y), false);
@@ -539,7 +656,7 @@ public class GameManager : MonoBehaviour
                 cardUpto++;
                 
                 if (x==MAP_SIZE_FROM_START && y==MAP_SIZE_FROM_START) {
-                    playerObject.transform.localPosition=new Vector3(x*CARD_WIDTH_OFFSET, y*CARD_HEIGHT_OFFSET, 0);
+                    playerObject.transform.localPosition=cardObject.transform.localPosition;//new Vector3(x*CARD_WIDTH_OFFSET, y*CARD_HEIGHT_OFFSET, 0);
                     thisCard.setVisited();
                 }
             }
@@ -574,7 +691,8 @@ public class GameManager : MonoBehaviour
             calculateCardCombos(true); //Cash out any card combos
             updateUI();
             winLossOverlay.SetActive(true);
-            audioManager.fadeInMusic(won ? MUSIC_WIN  : MUSIC_DEFEAT, 1, 1f);
+            audioManager.playSound(won ? SOUND_WIN  : SOUND_DEFEAT, 1f);
+            audioManager.muteMusic();
             winLoseTitleTXT.text = "<b><color=#"+(won ?  "0C8C2F" : "9A0707")+">" + (won ? "You win!" : "You lose!")+"</color></b>";
             if (won) {
                 winLoseConditionTXT.text="<b><color=#0C8C2F>You got to "+BLOOD_MAX.ToString()+" blood!</color></b>";   
@@ -584,13 +702,17 @@ public class GameManager : MonoBehaviour
             }
 
             winLoseStatsTXT.text=
-            "Blood Harvested: "+statBloodHarvested.ToString()+
-            "<br>Actions Taken: "+statMoves.ToString()+
-            "<br>Distance Moved: "+statDistanceMoved.ToString()+
-            "<br>Blood spent on movement: "+statBloodSpentOnMovement.ToString()+
+            "Actions taken: "+statMoves.ToString()+
+            "<br>Distance moved: "+statDistanceMoved.ToString()+
+            "<br>Blood harvested: "+statBloodHarvested.ToString()+
+            "<br>Blood spent on movement: -"+statBloodSpentOnMovement.ToString()+
             "<br>Sanity gained: "+statSanityGained.ToString()+
-            "<br>Score from events: "+scoreFromItems.ToString()+
-            "<br>Score lost from movement: "+scoreLostFromMovement.ToString();
+            "<br><br>Score from events: "+scoreFromItems.ToString()+
+            "<br>Score from winning: "+(won ? SCORE_WIN_BONUS.ToString() : "0")+
+            "<br>Score from flushes: "+scoreFromFlushes.ToString()+
+            "<br>Score from straights: "+scoreFromStraights.ToString()+
+            "<br>Score from sets: "+scoreFromSets.ToString()+
+            "<br>Score spent on movement: -"+scoreLostFromMovement.ToString();
 
             winLoseScoreTXT.text="Score: "+score.ToString();
 
@@ -679,6 +801,10 @@ public class GameManager : MonoBehaviour
         updateUI();
 
         statBloodHarvested+=modifier;
+
+        if (modifier>0) {
+            recentBloodGain=modifier;
+        }
     }
 
     public void modifyScore(int modifier, bool fromItem=true) {
@@ -688,6 +814,10 @@ public class GameManager : MonoBehaviour
 
         if (fromItem && modifier>0) {
             scoreFromItems+=modifier;
+        }
+
+        if (modifier>0) {
+            recentScoreGain=modifier;
         }
     }
 
@@ -709,7 +839,14 @@ public class GameManager : MonoBehaviour
         return bloodCost;
     }
 
+
+    public void toggleMenu() {
+        menuContainer.SetActive(!menuContainer.activeSelf);
+    }
+
     public void movePlayer(Card cardToMoveTo) {
+
+        menuContainer.SetActive(false);
 
         //Blood movement cost
         int bloodCost=getMoveCost(cardToMoveTo, true, false);
@@ -796,6 +933,8 @@ public class GameManager : MonoBehaviour
             if ((flushPoints==0 || cashOut) && pendingFlushPoints>0) {
                 score+=pendingFlushPoints;
                 scoreFromCards+=pendingFlushPoints;
+                recentFlushScore=pendingFlushPoints;
+                scoreFromFlushes+=pendingFlushPoints;
                 pendingFlushPoints=0;
             }
             else if (flushPoints>0) {
@@ -824,6 +963,8 @@ public class GameManager : MonoBehaviour
             if ((setPoints==0 || cashOut) && pendingSetPoints>0) {
                 score+=pendingSetPoints;
                 scoreFromCards+=pendingSetPoints;
+                recentSetScore=pendingSetPoints;
+                scoreFromSets+=pendingSetPoints;
                 pendingSetPoints=0;
             }
             else if (setPoints>0) {
@@ -858,6 +999,8 @@ public class GameManager : MonoBehaviour
                 if ((straightPoints==0 || cashOut) && pendingStraightPoints>0) {
                     score+=pendingStraightPoints;
                     scoreFromCards+=pendingStraightPoints;
+                    recentStraightScore=pendingStraightPoints;
+                    scoreFromStraights+=pendingStraightPoints;
                     pendingStraightPoints=0;
                 }
                 else if (straightPoints>0) {

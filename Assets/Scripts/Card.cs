@@ -166,6 +166,10 @@ public class Card
     }
 
     public void updateUI() {
+        if (cardOverlayObject==null) {
+            return;
+        }
+
         cardOverlayObject.SetActive(this.visited || !this.visible);
         if (this.visited) {
             cardOverlayImage.sprite=gameManager.cardDepletedSprite;
@@ -241,7 +245,7 @@ public class Card
         }
         else if (bloodModifier>0) {
             int attackSoundToPlay = Random.Range(0, 2);
-            gameManager.audioManager.playSound(attackSoundToPlay==0 ? gameManager.SOUND_FIGHT_2 : attackSoundToPlay==1 ? gameManager.SOUND_FIGHT_3 : gameManager.SOUND_FIGHT_4, 1f);
+            gameManager.audioManager.playSound(attackSoundToPlay==0 ? gameManager.SOUND_FIGHT_2 : attackSoundToPlay==1 ? gameManager.SOUND_FIGHT_3 : gameManager.SOUND_FIGHT_4, .5f);
         }
         else if (scoreModifier>0) {
             gameManager.audioManager.playSound(gameManager.SOUND_SCORE, 1f);
@@ -255,7 +259,7 @@ public class Card
             gameManager.bloodCostOverlay.transform.SetParent(cardObject.transform);
             gameManager.bloodCostOverlay.transform.localPosition= new Vector3(0,0,0);
             gameManager.bloodCostOverlay.transform.localScale= gameManager.BOARD_SCALE;
-            gameManager.bloodCostOverlay.transform.SetParent(gameManager.cardContainer.transform);
+            gameManager.bloodCostOverlay.transform.SetParent(gameManager.playerContainer.transform);
             gameManager.bloodCostOverlay.transform.SetAsLastSibling();
             gameManager.getMoveCost(this, false, true);
         }

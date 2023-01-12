@@ -12,13 +12,15 @@ public class FadingAnimationHandler : MonoBehaviour
     float timeSpent;
 
 
-    public void init(float newTravelTime, Vector3 newOrigin, string text) {
-        origin=newOrigin+new Vector3(0f, .35f, 0);
+    public void init(float newTravelTime, Vector3 newOrigin, string text, Sprite sprite, int numberOfOtherTexts, float textScale) {
+        origin=newOrigin+new Vector3(0f, .5f*(numberOfOtherTexts+1), 0);
         travelTime=newTravelTime;
         timeSpent=0f;
         gameObject.transform.localScale=new Vector3(1f, 1f, 1f);
         destination=origin+new Vector3(0,1,0);
-        gameObject.GetComponent<TextMeshProUGUI>().text=text;
+        gameObject.transform.GetChild(0).gameObject.GetComponent<TextMeshProUGUI>().text=text;
+        gameObject.transform.GetChild(0).localScale=new Vector3(textScale, textScale, textScale);
+        gameObject.transform.GetChild(1).gameObject.GetComponent<Image>().sprite=sprite;
         gameObject.transform.position=origin;
     }
 
