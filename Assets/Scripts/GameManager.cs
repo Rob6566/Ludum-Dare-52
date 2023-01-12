@@ -285,6 +285,11 @@ public class GameManager : MonoBehaviour
             if (moveCamera) {
                 manuallyOperatingCamera=true;
                 camera.transform.position=camera.transform.position+(cameraDirection*Time.deltaTime*CAMERA_MANUAL_MOVE_SPEED);
+                restrictCameraToMap();
+            }
+
+            if (Input.GetKey(KeyCode.Q)) { 
+                Debug.Log("Camera Position = "+camera.transform.position);
             }
 
 
@@ -302,6 +307,8 @@ public class GameManager : MonoBehaviour
                 manuallyOperatingCamera=true;
             }
 
+            
+
             //Mouse drag to move camera
             if (Input.GetMouseButtonDown(1)) {
                 dragOrigin = Input.mousePosition;
@@ -314,8 +321,25 @@ public class GameManager : MonoBehaviour
     
             camera.transform.Translate(move, Space.World);  
             manuallyOperatingCamera=true;
+
+            if (Input.GetKey(KeyCode.Q)) { 
+                Debug.Log("Camera Position = "+camera.transform.position);
+            }
+
+            restrictCameraToMap();
             
         }
+    }
+
+    //Makes sure our camera doesn't escape the map
+    public void restrictCameraToMap() {
+        Vector3 currentPosition=camera.transform.position;
+        currentPosition.x=Mathf.Max(2,currentPosition.x);
+        currentPosition.x=Mathf.Min(17f,currentPosition.x);
+        
+        currentPosition.y=Mathf.Max(0.7f,currentPosition.y);
+        currentPosition.y=Mathf.Min(20f,currentPosition.y);
+        camera.transform.position=currentPosition;
     }
 
     //Auto-runs when game starts
@@ -539,7 +563,7 @@ public class GameManager : MonoBehaviour
         else if (blood>=BLOOD_MAX) {
             gameOver=true;
             won=true;
-            score+=WIN_BONUS;
+            score+=SCORE_WIN_BONUS;
         }
         else if (sanity<=0) {
             gameOver=true;
